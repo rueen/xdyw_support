@@ -1,0 +1,52 @@
+// 全局样式
+html, body, #app {
+  height: 100%;
+  min-height: 100vh;
+}
+
+// 页面通用容器
+.page-container {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+}
+
+// 搜索区域
+.search-area {
+  background: #fff;
+  padding: 24px 24px 0;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+// 表格区域
+.table-area {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+// 工具栏
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+// 状态 tag 颜色已由 ant-design-vue 提供，无需额外定义
+
+// 滚动条美化
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

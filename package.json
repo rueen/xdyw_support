@@ -1,0 +1,26 @@
+{
+  "name": "saibainuo-support",
+  "version": "1.0.0",
+  "description": "赛百诺病例管理系统",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.7.9",
+    "china-area-data": "^5.0.1",
+    "dayjs": "^1.11.13",
+    "pinia": "^2.2.8",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "less": "^4.2.1",
+    "vite": "^6.0.11"
+  }
+}
