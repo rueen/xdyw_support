@@ -103,11 +103,16 @@ import { getStatistics } from '@/api/statistics'
 const router = useRouter()
 
 /**
- * 跳转病例管理并携带状态筛选条件
+ * 跳转病例管理并携带状态及时间筛选条件
  * @param {string} [status] - 病例状态值，不传则不带状态筛选
  */
 function goRecords(status) {
-  const query = status ? { status } : {}
+  const query = {}
+  if (status) query.status = status
+  if (timeRangeText.value) {
+    query.createdAtStart = timeRangeText.value.start
+    query.createdAtEnd = timeRangeText.value.end
+  }
   router.push({ path: '/records', query })
 }
 
@@ -123,23 +128,22 @@ const stats = ref({
   visited: 0
 })
 
-/** 前端计算时间范围描述，格式 YYYY-MM-DD HH:mm:ss */
+/** 前端计算时间范围，格式 YYYY-MM-DD（后端自动按整天 00:00:00 ~ 23:59:59 处理） */
 const timeRangeText = computed(() => {
-  const FULL = 'YYYY-MM-DD HH:mm:ss'
   const today = dayjs()
 
   switch (rangeType.value) {
     case 'yesterday': {
       const yesterday = today.subtract(1, 'day')
       return {
-        start: yesterday.format('YYYY-MM-DD') + ' 00:00:00',
-        end: yesterday.format('YYYY-MM-DD') + ' 23:59:59'
+        start: yesterday.format('YYYY-MM-DD'),
+        end: yesterday.format('YYYY-MM-DD')
       }
     }
     case 'today':
       return {
-        start: today.format('YYYY-MM-DD') + ' 00:00:00',
-        end: today.format('YYYY-MM-DD') + ' 23:59:59'
+        start: today.format('YYYY-MM-DD'),
+        end: today.format('YYYY-MM-DD')
       }
     case 'week': {
       // 本周一：day() 返回 0=周日..6=周六，向前找到本周一
@@ -147,20 +151,20 @@ const timeRangeText = computed(() => {
       const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
       const monday = today.add(daysToMonday, 'day')
       return {
-        start: monday.format('YYYY-MM-DD') + ' 00:00:00',
-        end: today.format('YYYY-MM-DD') + ' 23:59:59'
+        start: monday.format('YYYY-MM-DD'),
+        end: today.format('YYYY-MM-DD')
       }
     }
     case 'month':
       return {
-        start: today.startOf('month').format('YYYY-MM-DD') + ' 00:00:00',
-        end: today.format('YYYY-MM-DD') + ' 23:59:59'
+        start: today.startOf('month').format('YYYY-MM-DD'),
+        end: today.format('YYYY-MM-DD')
       }
     case 'custom':
       if (customRange.value?.length === 2) {
         return {
-          start: customRange.value[0] + ' 00:00:00',
-          end: customRange.value[1] + ' 23:59:59'
+          start: customRange.value[0],
+          end: customRange.value[1]
         }
       }
       return null

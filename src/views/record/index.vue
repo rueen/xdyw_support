@@ -55,6 +55,14 @@
             </a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item label="创建时间">
+          <a-range-picker
+            v-model:value="createdAtRange"
+            value-format="YYYY-MM-DD"
+            style="width: 260px"
+            @change="onCreatedAtRangeChange"
+          />
+        </a-form-item>
         <a-form-item>
           <a-button type="primary" html-type="submit">查询</a-button>
           <a-button style="margin-left: 8px" @click="resetSearch">重置</a-button>
@@ -353,8 +361,36 @@ const searchForm = reactive({
   patientPhone: '',
   patientIdCard: '',
   doctorId: undefined,
-  status: undefined
+  status: undefined,
+  createdAtStart: undefined,
+  createdAtEnd: undefined
 })
+
+/** 日期区间选择器双向绑定值（[start, end]），用于回显 */
+const createdAtRange = ref([])
+
+/**
+ * 截取日期部分（兼容旧链接携带的时间格式）
+ * @param {string} val - 日期或日期时间字符串
+ * @returns {string}
+ */
+function toDateOnly(val) {
+  return val ? val.slice(0, 10) : val
+}
+
+/**
+ * 日期区间变化时同步到 searchForm
+ * @param {string[]|null} val - 选中的日期范围
+ */
+function onCreatedAtRangeChange(val) {
+  if (val && val.length === 2) {
+    searchForm.createdAtStart = val[0]
+    searchForm.createdAtEnd = val[1]
+  } else {
+    searchForm.createdAtStart = undefined
+    searchForm.createdAtEnd = undefined
+  }
+}
 
 function handleSearch() {
   pagination.current = 1
@@ -367,8 +403,11 @@ function resetSearch() {
     patientPhone: '',
     patientIdCard: '',
     doctorId: undefined,
-    status: undefined
+    status: undefined,
+    createdAtStart: undefined,
+    createdAtEnd: undefined
   })
+  createdAtRange.value = []
   pagination.current = 1
   fetchList()
 }
@@ -649,9 +688,16 @@ async function doDelete(record) {
 }
 
 onMounted(() => {
-  // 从工作台跳转时，自动带入状态筛选条件
+  // 从工作台跳转时，自动带入状态及时间筛选条件
   if (route.query.status) {
     searchForm.status = route.query.status
+  }
+  if (route.query.createdAtStart && route.query.createdAtEnd) {
+    const start = toDateOnly(route.query.createdAtStart)
+    const end = toDateOnly(route.query.createdAtEnd)
+    searchForm.createdAtStart = start
+    searchForm.createdAtEnd = end
+    createdAtRange.value = [start, end]
   }
   fetchList()
   if (!isDoctor.value) {
