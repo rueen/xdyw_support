@@ -3,7 +3,7 @@
     <div class="login-box">
       <div class="login-header">
         <!-- <div class="login-logo">SBN</div> -->
-        <h1 class="login-title">赛百诺病例管理系统</h1>
+        <h1 class="login-title">鑫达医委病例管理系统</h1>
         <p class="login-subtitle">医疗数据管理平台</p>
       </div>
 

@@ -34,6 +34,11 @@
                 >
                   <a-tag color="purple">{{ record.next_follow_up_time }}</a-tag>
                 </a-descriptions-item>
+                <a-descriptions-item label="付费状态" :span="2">
+                  <a-tag :color="PAYMENT_STATUS[record.payment_status]?.color">
+                    {{ PAYMENT_STATUS[record.payment_status]?.label || '-' }}
+                  </a-tag>
+                </a-descriptions-item>
                 <a-descriptions-item label="病情描述" :span="2">
                   <div style="white-space: pre-wrap">{{ record.description || '（暂无描述）' }}</div>
                 </a-descriptions-item>
@@ -90,9 +95,9 @@
                   </a-button>
                 </template>
 
-                <!-- 业务员：已就诊（仅本人录入） -->
+                <!-- 业务员本人 / 超管：已就诊（suitable） -->
                 <a-button
-                  v-if="isSalesperson && isOwnRecord && record.status === 'suitable'"
+                  v-if="canOperate && record.status === 'suitable'"
                   type="primary"
                   block
                   style="background: #722ed1; border-color: #722ed1"
@@ -101,9 +106,9 @@
                   <medicine-box-outlined /> 已就诊
                 </a-button>
 
-                <!-- 业务员：已复诊（仅本人录入） -->
+                <!-- 业务员本人 / 超管：已复诊（pending_follow_up） -->
                 <a-button
-                  v-if="isSalesperson && isOwnRecord && record.status === 'pending_follow_up'"
+                  v-if="canOperate && record.status === 'pending_follow_up'"
                   type="primary"
                   block
                   @click="openFollowUpModal"
@@ -111,9 +116,9 @@
                   <calendar-outlined /> 已复诊
                 </a-button>
 
-                <!-- 业务员：补充资料（仅本人录入） -->
+                <!-- 业务员本人 / 超管：补充资料（incomplete） -->
                 <a-button
-                  v-if="isSalesperson && isOwnRecord && record.status === 'incomplete'"
+                  v-if="canOperate && record.status === 'incomplete'"
                   type="primary"
                   block
                   style="background: #fa8c16; border-color: #fa8c16"
@@ -122,13 +127,33 @@
                   <edit-outlined /> 补充资料
                 </a-button>
 
-                <!-- 业务员：已完诊（仅本人录入） -->
+                <!-- 业务员本人 / 超管：已完诊 -->
                 <a-button
-                  v-if="isSalesperson && isOwnRecord && record.status !== 'completed'"
+                  v-if="canOperate && record.status !== 'completed'"
                   block
                   @click="doComplete"
                 >
                   <check-circle-outlined /> 标记已完诊
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已付费（待付费状态） -->
+                <a-button
+                  v-if="canOperate && record.payment_status === 'pending_payment'"
+                  type="primary"
+                  block
+                  @click="openPayModal"
+                >
+                  <pay-circle-outlined /> 已付费
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已退费（已付费状态） -->
+                <a-button
+                  v-if="canOperate && record.payment_status === 'paid'"
+                  danger
+                  block
+                  @click="openRefundModal"
+                >
+                  <rollback-outlined /> 已退费
                 </a-button>
 
                 <a-empty v-if="!hasActions" description="暂无可执行操作" :image-style="{ height: '40px' }" />
@@ -149,6 +174,21 @@
                       {{ op.operator_name }}（{{ op.operator_type === 'doctor' ? '医生' : '业务员' }}）
                     </div>
                     <div v-if="op.notes" class="op-notes">备注：{{ op.notes }}</div>
+                    <template v-if="op.extra_data && (op.operation === 'pay' || op.operation === 'refund')">
+                      <div v-if="op.extra_data.amount != null" class="op-extra">金额：¥{{ op.extra_data.amount }}</div>
+                      <div v-if="op.extra_data.notes" class="op-extra">说明：{{ op.extra_data.notes }}</div>
+                      <div v-if="op.extra_data.vouchers?.length" class="op-vouchers">
+                        <a-image-preview-group>
+                          <a-image
+                            v-for="(url, idx) in op.extra_data.vouchers"
+                            :key="idx"
+                            :src="url"
+                            :width="48"
+                            :height="48"
+                          />
+                        </a-image-preview-group>
+                      </div>
+                    </template>
                     <div class="op-time">{{ op.created_at }}</div>
                   </div>
                 </a-timeline-item>
@@ -229,6 +269,74 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- 已付费 Modal -->
+    <a-modal
+      v-model:open="payModalVisible"
+      title="记录付费"
+      width="560px"
+      :confirm-loading="submitLoading"
+      @ok="submitPay"
+      @cancel="payForm.vouchers = []"
+    >
+      <a-form layout="vertical" style="margin-top: 16px">
+        <a-form-item label="付款金额（元）" required>
+          <a-input-number
+            v-model:value="payForm.amount"
+            placeholder="请输入"
+            :min="0.01"
+            :precision="2"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="付款凭证（最多3张）">
+          <image-upload v-model="payForm.vouchers" :max-count="3" />
+        </a-form-item>
+        <a-form-item label="备注">
+          <a-textarea
+            v-model:value="payForm.notes"
+            placeholder="可填写备注（最多200字）"
+            :maxlength="200"
+            :rows="3"
+            show-count
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- 已退费 Modal -->
+    <a-modal
+      v-model:open="refundModalVisible"
+      title="记录退费"
+      width="560px"
+      :confirm-loading="submitLoading"
+      @ok="submitRefund"
+      @cancel="refundForm.vouchers = []"
+    >
+      <a-form layout="vertical" style="margin-top: 16px">
+        <a-form-item label="退款金额（元）">
+          <a-input-number
+            v-model:value="refundForm.amount"
+            placeholder="选填"
+            :min="0.01"
+            :precision="2"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="退款凭证（最多3张）">
+          <image-upload v-model="refundForm.vouchers" :max-count="3" />
+        </a-form-item>
+        <a-form-item label="备注">
+          <a-textarea
+            v-model:value="refundForm.notes"
+            placeholder="可填写备注（最多200字）"
+            :maxlength="200"
+            :rows="3"
+            show-count
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -244,23 +352,28 @@ import {
   MedicineBoxOutlined,
   CalendarOutlined,
   EditOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  PayCircleOutlined,
+  RollbackOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { RECORD_STATUS, OPERATION_LABELS } from '@/utils/constants'
+import { RECORD_STATUS, PAYMENT_STATUS, OPERATION_LABELS } from '@/utils/constants'
 import {
   getRecordDetail,
   reviewRecord,
   visitRecord,
   followUpRecord,
   completeRecord,
-  supplementRecord
+  supplementRecord,
+  payRecord,
+  refundRecord
 } from '@/api/record'
 import ImageUpload from '@/components/ImageUpload.vue'
 
 const route = useRoute()
 const userStore = useUserStore()
 
+const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
 const isSalesperson = computed(() => userStore.isSalesperson)
 
@@ -272,13 +385,17 @@ const isOwnRecord = computed(() =>
   record.value?.salesperson_id === userStore.userInfo?.id
 )
 
-/** 是否有可操作按钮（仅本人录入的病例才展示操作） */
+/** 当前登录者是否对本病例有操作权限（本人录入 或 超管） */
+const canOperate = computed(() => isSuperAdmin.value || isOwnRecord.value)
+
+/** 是否有可操作按钮 */
 const hasActions = computed(() => {
   if (!record.value) return false
   const s = record.value.status
+  const ps = record.value.payment_status
   if (isDoctor.value && s === 'pending_review') return true
-  if (isSalesperson.value && isOwnRecord.value && ['suitable', 'pending_follow_up', 'incomplete'].includes(s)) return true
-  if (isSalesperson.value && isOwnRecord.value && s !== 'completed') return true
+  if (canOperate.value && s !== 'completed') return true
+  if (canOperate.value && (ps === 'pending_payment' || ps === 'paid')) return true
   return false
 })
 
@@ -301,7 +418,9 @@ function getOperationColor(operation) {
     supplement: 'orange',
     visited: 'purple',
     follow_up: 'blue',
-    complete: 'gray'
+    complete: 'gray',
+    pay: 'green',
+    refund: 'red'
   }
   return colorMap[operation] || 'blue'
 }
@@ -434,6 +553,64 @@ async function submitSupplement() {
   }
 }
 
+// ===================== 已付费 =====================
+const payModalVisible = ref(false)
+const payForm = reactive({ amount: undefined, vouchers: [], notes: '' })
+
+function openPayModal() {
+  Object.assign(payForm, { amount: undefined, vouchers: [], notes: '' })
+  payModalVisible.value = true
+}
+
+async function submitPay() {
+  if (!payForm.amount || payForm.amount <= 0) {
+    message.warning('请填写大于 0 的付款金额')
+    return
+  }
+  submitLoading.value = true
+  try {
+    await payRecord(record.value.id, {
+      amount: payForm.amount,
+      vouchers: payForm.vouchers.length ? payForm.vouchers : undefined,
+      notes: payForm.notes || undefined
+    })
+    message.success('已记录付费')
+    payModalVisible.value = false
+    fetchDetail()
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// ===================== 已退费 =====================
+const refundModalVisible = ref(false)
+const refundForm = reactive({ amount: undefined, vouchers: [], notes: '' })
+
+function openRefundModal() {
+  Object.assign(refundForm, { amount: undefined, vouchers: [], notes: '' })
+  refundModalVisible.value = true
+}
+
+async function submitRefund() {
+  if (refundForm.amount != null && refundForm.amount <= 0) {
+    message.warning('退款金额须大于 0')
+    return
+  }
+  submitLoading.value = true
+  try {
+    await refundRecord(record.value.id, {
+      amount: refundForm.amount || undefined,
+      vouchers: refundForm.vouchers.length ? refundForm.vouchers : undefined,
+      notes: refundForm.notes || undefined
+    })
+    message.success('已记录退费')
+    refundModalVisible.value = false
+    fetchDetail()
+  } finally {
+    submitLoading.value = false
+  }
+}
+
 onMounted(fetchDetail)
 </script>
 
@@ -466,6 +643,34 @@ onMounted(fetchDetail)
     color: #fa8c16;
     font-size: 13px;
     margin-top: 2px;
+  }
+  .op-extra {
+    color: #666;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .op-vouchers {
+    margin-top: 6px;
+
+    :deep(.ant-image-preview-group) {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+    }
+
+    :deep(.ant-image) {
+      flex-shrink: 0;
+      width: 48px !important;
+      height: 48px !important;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    :deep(.ant-image-img) {
+      width: 48px !important;
+      height: 48px !important;
+      object-fit: cover;
+    }
   }
   .op-time {
     color: #bbb;

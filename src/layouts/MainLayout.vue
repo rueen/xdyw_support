@@ -10,7 +10,7 @@
       theme="dark"
     >
       <div class="logo">
-        <span v-if="!collapsed" class="logo-text">赛百诺管理系统</span>
+        <span v-if="!collapsed" class="logo-text">鑫达医委管理系统</span>
         <span v-else class="logo-short">SBN</span>
       </div>
       <a-menu

@@ -10,6 +10,15 @@ export const RECORD_STATUS = {
   completed: { label: '已完诊', color: 'default' }
 }
 
+/**
+ * 付费状态枚举与展示配置
+ */
+export const PAYMENT_STATUS = {
+  pending_payment: { label: '待付费', color: 'gold' },
+  paid: { label: '已付费', color: 'green' },
+  refunded: { label: '已退费', color: 'red' }
+}
+
 /** 操作日志类型文字映射 */
 export const OPERATION_LABELS = {
   create: '创建病例',
@@ -20,5 +29,7 @@ export const OPERATION_LABELS = {
   supplement: '业务员补充资料',
   visited: '业务员操作：已就诊',
   follow_up: '业务员操作：已复诊',
-  complete: '标记：已完诊'
+  complete: '标记：已完诊',
+  pay: '标记：已付费',
+  refund: '标记：已退费'
 }

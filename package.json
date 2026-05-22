@@ -1,7 +1,7 @@
 {
   "name": "saibainuo-support",
   "version": "1.0.0",
-  "description": "赛百诺病例管理系统",
+  "description": "鑫达医委病例管理系统",
   "type": "module",
   "scripts": {
     "dev": "vite",

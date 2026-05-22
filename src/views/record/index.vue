@@ -55,6 +55,18 @@
             </a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item label="付费状态">
+          <a-select
+            v-model:value="searchForm.paymentStatus"
+            placeholder="请选择"
+            allow-clear
+            style="width: 120px"
+          >
+            <a-select-option v-for="(v, k) in PAYMENT_STATUS" :key="k" :value="k">
+              {{ v.label }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="创建时间">
           <a-range-picker
             v-model:value="createdAtRange"
@@ -100,6 +112,12 @@
             </a-tag>
           </template>
 
+          <template v-else-if="column.key === 'payment_status'">
+            <a-tag :color="PAYMENT_STATUS[record.payment_status]?.color">
+              {{ PAYMENT_STATUS[record.payment_status]?.label || record.payment_status || '-' }}
+            </a-tag>
+          </template>
+
           <!-- 复诊时间 -->
           <template v-else-if="column.key === 'next_follow_up_time'">
             <span v-if="record.status === 'pending_follow_up' && record.next_follow_up_time">
@@ -113,9 +131,9 @@
             <a-space wrap>
               <a-button type="link" size="small" @click="goDetail(record)">详情</a-button>
 
-              <!-- 业务员：编辑（仅本人录入） -->
+              <!-- 业务员本人 / 超管：编辑 -->
               <a-button
-                v-if="isSalesperson && isOwnRecord(record) && record.status !== 'completed'"
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status !== 'completed'"
                 type="link"
                 size="small"
                 @click="openEditModal(record)"
@@ -136,9 +154,9 @@
                 </a-button>
               </template>
 
-              <!-- 业务员：已就诊（suitable，仅本人录入） -->
+              <!-- 业务员本人 / 超管：已就诊（suitable） -->
               <a-button
-                v-if="isSalesperson && isOwnRecord(record) && record.status === 'suitable'"
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'suitable'"
                 type="link"
                 size="small"
                 style="color: #722ed1"
@@ -147,9 +165,9 @@
                 已就诊
               </a-button>
 
-              <!-- 业务员：已复诊（pending_follow_up，仅本人录入） -->
+              <!-- 业务员本人 / 超管：已复诊（pending_follow_up） -->
               <a-button
-                v-if="isSalesperson && isOwnRecord(record) && record.status === 'pending_follow_up'"
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'pending_follow_up'"
                 type="link"
                 size="small"
                 style="color: #1677ff"
@@ -158,9 +176,9 @@
                 已复诊
               </a-button>
 
-              <!-- 业务员：补充资料（incomplete，仅本人录入） -->
+              <!-- 业务员本人 / 超管：补充资料（incomplete） -->
               <a-button
-                v-if="isSalesperson && isOwnRecord(record) && record.status === 'incomplete'"
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'incomplete'"
                 type="link"
                 size="small"
                 style="color: #fa8c16"
@@ -169,15 +187,37 @@
                 补充资料
               </a-button>
 
-              <!-- 业务员：已完诊（仅本人录入） -->
+              <!-- 业务员本人 / 超管：已完诊 -->
               <a-button
-                v-if="isSalesperson && isOwnRecord(record) && record.status !== 'completed'"
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status !== 'completed'"
                 type="link"
                 size="small"
                 style="color: #999"
                 @click="doComplete(record)"
               >
                 已完诊
+              </a-button>
+
+              <!-- 业务员本人 / 超管：已付费（待付费状态） -->
+              <a-button
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'pending_payment'"
+                type="link"
+                size="small"
+                style="color: #1677ff"
+                @click="openPayModal(record)"
+              >
+                已付费
+              </a-button>
+
+              <!-- 业务员本人 / 超管：已退费（已付费状态） -->
+              <a-button
+                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'paid'"
+                type="link"
+                size="small"
+                style="color: #ff4d4f"
+                @click="openRefundModal(record)"
+              >
+                已退费
               </a-button>
 
               <!-- 超管：删除 -->
@@ -300,6 +340,74 @@
       </a-form>
     </a-modal>
 
+    <!-- 已付费 Modal -->
+    <a-modal
+      v-model:open="payModalVisible"
+      title="记录付费"
+      width="560px"
+      :confirm-loading="submitLoading"
+      @ok="submitPay"
+      @cancel="payForm.vouchers = []"
+    >
+      <a-form layout="vertical" style="margin-top: 16px">
+        <a-form-item label="付款金额（元）" required>
+          <a-input-number
+            v-model:value="payForm.amount"
+            placeholder="请输入"
+            :min="0.01"
+            :precision="2"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="付款凭证（最多3张）">
+          <image-upload v-model="payForm.vouchers" :max-count="3" />
+        </a-form-item>
+        <a-form-item label="备注">
+          <a-textarea
+            v-model:value="payForm.notes"
+            placeholder="可填写备注（最多200字）"
+            :maxlength="200"
+            :rows="3"
+            show-count
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- 已退费 Modal -->
+    <a-modal
+      v-model:open="refundModalVisible"
+      title="记录退费"
+      width="560px"
+      :confirm-loading="submitLoading"
+      @ok="submitRefund"
+      @cancel="refundForm.vouchers = []"
+    >
+      <a-form layout="vertical" style="margin-top: 16px">
+        <a-form-item label="退款金额（元）">
+          <a-input-number
+            v-model:value="refundForm.amount"
+            placeholder="选填"
+            :min="0.01"
+            :precision="2"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="退款凭证（最多3张）">
+          <image-upload v-model="refundForm.vouchers" :max-count="3" />
+        </a-form-item>
+        <a-form-item label="备注">
+          <a-textarea
+            v-model:value="refundForm.notes"
+            placeholder="可填写备注（最多200字）"
+            :maxlength="200"
+            :rows="3"
+            show-count
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
     <!-- 补充资料 Modal -->
     <a-modal
       v-model:open="supplementModalVisible"
@@ -332,7 +440,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { RECORD_STATUS } from '@/utils/constants'
+import { RECORD_STATUS, PAYMENT_STATUS } from '@/utils/constants'
 import {
   getRecordList,
   createRecord,
@@ -342,7 +450,9 @@ import {
   visitRecord,
   followUpRecord,
   completeRecord,
-  supplementRecord
+  supplementRecord,
+  payRecord,
+  refundRecord
 } from '@/api/record'
 import { getActiveDoctors } from '@/api/doctor'
 import ImageUpload from '@/components/ImageUpload.vue'
@@ -371,6 +481,7 @@ const searchForm = reactive({
   patientIdCard: '',
   doctorId: undefined,
   status: undefined,
+  paymentStatus: undefined,
   createdAtStart: undefined,
   createdAtEnd: undefined
 })
@@ -413,6 +524,7 @@ function resetSearch() {
     patientIdCard: '',
     doctorId: undefined,
     status: undefined,
+    paymentStatus: undefined,
     createdAtStart: undefined,
     createdAtEnd: undefined
   })
@@ -434,6 +546,7 @@ const columns = computed(() => {
     { title: '指派医生', dataIndex: 'doctor_name', key: 'doctor_name', width: 100 },
     { title: '录入业务员', dataIndex: 'salesperson_name', key: 'salesperson_name', width: 110 },
     { title: '状态', key: 'status', width: 120 },
+    { title: '付费状态', key: 'payment_status', width: 100 },
     { title: '下次复诊', key: 'next_follow_up_time', width: 110 },
     { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 160 },
     { title: '操作', key: 'action', fixed: 'right', width: 280 }
@@ -694,6 +807,66 @@ async function doDelete(record) {
   await deleteRecord(record.id)
   message.success('删除成功')
   fetchList()
+}
+
+// ===================== 已付费 =====================
+const payModalVisible = ref(false)
+const payForm = reactive({ amount: undefined, vouchers: [], notes: '' })
+
+function openPayModal(record) {
+  currentRecord.value = record
+  Object.assign(payForm, { amount: undefined, vouchers: [], notes: '' })
+  payModalVisible.value = true
+}
+
+async function submitPay() {
+  if (!payForm.amount || payForm.amount <= 0) {
+    message.warning('请填写大于 0 的付款金额')
+    return
+  }
+  submitLoading.value = true
+  try {
+    await payRecord(currentRecord.value.id, {
+      amount: payForm.amount,
+      vouchers: payForm.vouchers.length ? payForm.vouchers : undefined,
+      notes: payForm.notes || undefined
+    })
+    message.success('已记录付费')
+    payModalVisible.value = false
+    fetchList()
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// ===================== 已退费 =====================
+const refundModalVisible = ref(false)
+const refundForm = reactive({ amount: undefined, vouchers: [], notes: '' })
+
+function openRefundModal(record) {
+  currentRecord.value = record
+  Object.assign(refundForm, { amount: undefined, vouchers: [], notes: '' })
+  refundModalVisible.value = true
+}
+
+async function submitRefund() {
+  if (refundForm.amount != null && refundForm.amount <= 0) {
+    message.warning('退款金额须大于 0')
+    return
+  }
+  submitLoading.value = true
+  try {
+    await refundRecord(currentRecord.value.id, {
+      amount: refundForm.amount || undefined,
+      vouchers: refundForm.vouchers.length ? refundForm.vouchers : undefined,
+      notes: refundForm.notes || undefined
+    })
+    message.success('已记录退费')
+    refundModalVisible.value = false
+    fetchList()
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 onMounted(() => {

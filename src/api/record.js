@@ -83,3 +83,21 @@ export function completeRecord(id) {
 export function supplementRecord(id, data) {
   return request.post(`/records/${id}/supplement`, data)
 }
+
+/**
+ * 业务员操作「已付费」
+ * @param {number} id
+ * @param {object} data - { amount, vouchers?, notes? }
+ */
+export function payRecord(id, data) {
+  return request.post(`/records/${id}/pay`, data)
+}
+
+/**
+ * 业务员操作「已退费」
+ * @param {number} id
+ * @param {object} data - { amount?, vouchers?, notes? }
+ */
+export function refundRecord(id, data) {
+  return request.post(`/records/${id}/refund`, data)
+}
