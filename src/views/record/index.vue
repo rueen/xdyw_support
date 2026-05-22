@@ -113,9 +113,9 @@
             <a-space wrap>
               <a-button type="link" size="small" @click="goDetail(record)">详情</a-button>
 
-              <!-- 业务员：编辑 -->
+              <!-- 业务员：编辑（仅本人录入） -->
               <a-button
-                v-if="isSalesperson && record.status !== 'completed'"
+                v-if="isSalesperson && isOwnRecord(record) && record.status !== 'completed'"
                 type="link"
                 size="small"
                 @click="openEditModal(record)"
@@ -136,9 +136,9 @@
                 </a-button>
               </template>
 
-              <!-- 业务员：已就诊（suitable） -->
+              <!-- 业务员：已就诊（suitable，仅本人录入） -->
               <a-button
-                v-if="isSalesperson && record.status === 'suitable'"
+                v-if="isSalesperson && isOwnRecord(record) && record.status === 'suitable'"
                 type="link"
                 size="small"
                 style="color: #722ed1"
@@ -147,9 +147,9 @@
                 已就诊
               </a-button>
 
-              <!-- 业务员：已复诊（pending_follow_up） -->
+              <!-- 业务员：已复诊（pending_follow_up，仅本人录入） -->
               <a-button
-                v-if="isSalesperson && record.status === 'pending_follow_up'"
+                v-if="isSalesperson && isOwnRecord(record) && record.status === 'pending_follow_up'"
                 type="link"
                 size="small"
                 style="color: #1677ff"
@@ -158,9 +158,9 @@
                 已复诊
               </a-button>
 
-              <!-- 业务员：补充资料（incomplete） -->
+              <!-- 业务员：补充资料（incomplete，仅本人录入） -->
               <a-button
-                v-if="isSalesperson && record.status === 'incomplete'"
+                v-if="isSalesperson && isOwnRecord(record) && record.status === 'incomplete'"
                 type="link"
                 size="small"
                 style="color: #fa8c16"
@@ -169,9 +169,9 @@
                 补充资料
               </a-button>
 
-              <!-- 业务员：已完诊（任意状态） -->
+              <!-- 业务员：已完诊（仅本人录入） -->
               <a-button
-                v-if="isSalesperson && record.status !== 'completed'"
+                v-if="isSalesperson && isOwnRecord(record) && record.status !== 'completed'"
                 type="link"
                 size="small"
                 style="color: #999"
@@ -354,6 +354,15 @@ const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
 const isSalesperson = computed(() => userStore.isSalesperson)
+
+/**
+ * 判断某条病例是否由当前登录业务员本人录入
+ * @param {object} record - 病例行数据
+ * @returns {boolean}
+ */
+function isOwnRecord(record) {
+  return record.salesperson_id === userStore.userInfo?.id
+}
 
 // ===================== 搜索 =====================
 const searchForm = reactive({

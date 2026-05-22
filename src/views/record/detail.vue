@@ -90,9 +90,9 @@
                   </a-button>
                 </template>
 
-                <!-- 业务员：已就诊 -->
+                <!-- 业务员：已就诊（仅本人录入） -->
                 <a-button
-                  v-if="isSalesperson && record.status === 'suitable'"
+                  v-if="isSalesperson && isOwnRecord && record.status === 'suitable'"
                   type="primary"
                   block
                   style="background: #722ed1; border-color: #722ed1"
@@ -101,9 +101,9 @@
                   <medicine-box-outlined /> 已就诊
                 </a-button>
 
-                <!-- 业务员：已复诊 -->
+                <!-- 业务员：已复诊（仅本人录入） -->
                 <a-button
-                  v-if="isSalesperson && record.status === 'pending_follow_up'"
+                  v-if="isSalesperson && isOwnRecord && record.status === 'pending_follow_up'"
                   type="primary"
                   block
                   @click="openFollowUpModal"
@@ -111,9 +111,9 @@
                   <calendar-outlined /> 已复诊
                 </a-button>
 
-                <!-- 业务员：补充资料 -->
+                <!-- 业务员：补充资料（仅本人录入） -->
                 <a-button
-                  v-if="isSalesperson && record.status === 'incomplete'"
+                  v-if="isSalesperson && isOwnRecord && record.status === 'incomplete'"
                   type="primary"
                   block
                   style="background: #fa8c16; border-color: #fa8c16"
@@ -122,9 +122,9 @@
                   <edit-outlined /> 补充资料
                 </a-button>
 
-                <!-- 业务员：已完诊 -->
+                <!-- 业务员：已完诊（仅本人录入） -->
                 <a-button
-                  v-if="isSalesperson && record.status !== 'completed'"
+                  v-if="isSalesperson && isOwnRecord && record.status !== 'completed'"
                   block
                   @click="doComplete"
                 >
@@ -267,13 +267,18 @@ const isSalesperson = computed(() => userStore.isSalesperson)
 const loading = ref(false)
 const record = ref(null)
 
-/** 是否有可操作按钮 */
+/** 当前病例是否由本人录入（业务员权限控制依据） */
+const isOwnRecord = computed(() =>
+  record.value?.salesperson_id === userStore.userInfo?.id
+)
+
+/** 是否有可操作按钮（仅本人录入的病例才展示操作） */
 const hasActions = computed(() => {
   if (!record.value) return false
   const s = record.value.status
   if (isDoctor.value && s === 'pending_review') return true
-  if (isSalesperson.value && ['suitable', 'pending_follow_up', 'incomplete'].includes(s)) return true
-  if (isSalesperson.value && s !== 'completed') return true
+  if (isSalesperson.value && isOwnRecord.value && ['suitable', 'pending_follow_up', 'incomplete'].includes(s)) return true
+  if (isSalesperson.value && isOwnRecord.value && s !== 'completed') return true
   return false
 })
 
