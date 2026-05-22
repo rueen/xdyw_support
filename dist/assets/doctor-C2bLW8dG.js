@@ -1,1 +1,0 @@
-import{r as o}from"./request-Cfk1E-X4.js";function c(t){return o.get("/doctors",{params:t})}function n(){return o.get("/doctors/active")}function s(t){return o.post("/doctors",t)}function u(t,r){return o.put(`/doctors/${t}`,r)}function a(t){return o.delete(`/doctors/${t}`)}export{c as a,s as c,a as d,n as g,u};
