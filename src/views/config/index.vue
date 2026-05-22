@@ -45,18 +45,6 @@
         </a-form>
       </a-spin>
     </a-card>
-
-    <!-- 配置说明 -->
-    <a-card title="配置说明" class="config-card">
-      <a-descriptions :column="1" bordered size="small">
-        <a-descriptions-item label="follow_up_interval_days">
-          复诊间隔天数。业务员标记「已就诊」后，系统根据此配置计算下次复诊到期时间（就诊时间 + 间隔天数）。
-        </a-descriptions-item>
-        <a-descriptions-item label="follow_up_reminder_days">
-          提前提醒天数。当复诊到期时间距今不超过该天数时，系统自动向对应业务员推送复诊提醒通知。
-        </a-descriptions-item>
-      </a-descriptions>
-    </a-card>
   </div>
 </template>
 
