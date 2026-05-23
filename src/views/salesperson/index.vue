@@ -512,10 +512,19 @@ onMounted(() => {
 .page-container { padding: 24px; }
 .search-area {
   background: #fff;
-  padding: 20px 24px 8px;
+  padding: 20px 24px;
   margin-bottom: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
+
+  :deep(.ant-form-inline) {
+    gap: 16px;
+  }
+
+  :deep(.ant-form-inline .ant-form-item) {
+    margin-bottom: 0;
+    margin-right: 0;
+  }
 }
 .table-area {
   background: #fff;
