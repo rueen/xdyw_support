@@ -2,9 +2,25 @@ import axios from 'axios'
 import { message } from 'ant-design-vue'
 
 const request = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 15000
 })
+
+/**
+ * 从接口响应中提取可读错误信息（优先展示字段级错误）
+ * @param {object} [data] - 接口响应体
+ * @param {string} [fallback='操作失败'] - 默认提示
+ * @returns {string}
+ */
+function getErrorMessage(data, fallback = '操作失败') {
+  const fieldErrors = (data?.errors || [])
+    .map((item) => item?.message)
+    .filter(Boolean)
+  if (fieldErrors.length) {
+    return fieldErrors.join('；')
+  }
+  return data?.message || fallback
+}
 
 /** 请求拦截：注入 Authorization token */
 request.interceptors.request.use(
@@ -25,14 +41,16 @@ request.interceptors.response.use(
     if (data.code === 200 || data.code === 201) {
       return data
     }
-    message.error(data.message || '操作失败')
-    return Promise.reject(new Error(data.message || '操作失败'))
+    const errMsg = getErrorMessage(data)
+    message.error(errMsg)
+    return Promise.reject(new Error(errMsg))
   },
   (error) => {
+    const data = error.response?.data
     if (error.response?.status === 401) {
       // 已在登录页，直接显示错误信息，不做页面跳转
       if (window.location.pathname === '/login') {
-        message.error(error.response.data?.message || '账号或密码错误')
+        message.error(getErrorMessage(data, '账号或密码错误'))
       } else {
         localStorage.removeItem('token')
         localStorage.removeItem('userInfo')
@@ -42,9 +60,9 @@ request.interceptors.response.use(
     } else if (error.response?.status === 403) {
       message.error('您没有权限执行此操作')
     } else if (error.response?.status === 409) {
-      message.error(error.response.data?.message || '数据冲突，请检查输入')
-    } else if (error.response?.data?.message) {
-      message.error(error.response.data.message)
+      message.error(getErrorMessage(data, '数据冲突，请检查输入'))
+    } else if (data) {
+      message.error(getErrorMessage(data, '网络请求失败，请稍后重试'))
     } else {
       message.error('网络请求失败，请稍后重试')
     }
