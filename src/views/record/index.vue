@@ -39,6 +39,16 @@
             </a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item v-if="!isDoctor" label="所属机构">
+          <a-select
+            v-model:value="searchForm.institutionId"
+            placeholder="请选择"
+            allow-clear
+            style="width: 160px"
+            :options="institutionOptions"
+            :field-names="{ label: 'name', value: 'id' }"
+          />
+        </a-form-item>
         <a-form-item label="状态">
           <a-select
             v-model:value="searchForm.status"
@@ -455,6 +465,7 @@ import {
   refundRecord
 } from '@/api/record'
 import { getActiveDoctors } from '@/api/doctor'
+import { getInstitutionList } from '@/api/institution'
 import ImageUpload from '@/components/ImageUpload.vue'
 
 const router = useRouter()
@@ -480,6 +491,7 @@ const searchForm = reactive({
   patientPhone: '',
   patientIdCard: '',
   doctorId: undefined,
+  institutionId: undefined,
   status: undefined,
   paymentStatus: undefined,
   createdAtStart: undefined,
@@ -523,6 +535,7 @@ function resetSearch() {
     patientPhone: '',
     patientIdCard: '',
     doctorId: undefined,
+    institutionId: undefined,
     status: undefined,
     paymentStatus: undefined,
     createdAtStart: undefined,
@@ -586,6 +599,21 @@ async function fetchDoctors() {
   try {
     const res = await getActiveDoctors()
     doctorOptions.value = res.data || []
+  } catch {
+    // 静默失败
+  }
+}
+
+// ===================== 机构列表 =====================
+const institutionOptions = ref([])
+
+/**
+ * 加载机构下拉选项（仅正常状态）
+ */
+async function fetchInstitutions() {
+  try {
+    const res = await getInstitutionList({ page: 1, pageSize: 100, status: 'normal' })
+    institutionOptions.value = res.data?.list || []
   } catch {
     // 静默失败
   }
@@ -884,6 +912,7 @@ onMounted(() => {
   fetchList()
   if (!isDoctor.value) {
     fetchDoctors()
+    fetchInstitutions()
   }
 })
 </script>

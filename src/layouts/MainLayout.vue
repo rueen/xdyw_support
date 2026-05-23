@@ -15,6 +15,7 @@
       </div>
       <a-menu
         v-model:selectedKeys="selectedKeys"
+        v-model:openKeys="openKeys"
         theme="dark"
         mode="inline"
         @click="onMenuClick"
@@ -27,10 +28,12 @@
           <template #icon><file-text-outlined /></template>
           病例管理
         </a-menu-item>
-        <a-menu-item v-if="!isDoctor" key="/salespersons">
+        <a-sub-menu v-if="!isDoctor" key="salesperson">
           <template #icon><team-outlined /></template>
-          业务员管理
-        </a-menu-item>
+          <template #title>业务员管理</template>
+          <a-menu-item key="/salespersons">我的业务员</a-menu-item>
+          <a-menu-item v-if="isSuperAdmin" key="/institutions">机构管理</a-menu-item>
+        </a-sub-menu>
         <a-menu-item v-if="isSuperAdmin" key="/doctors">
           <template #icon><medicine-box-outlined /></template>
           医生管理
@@ -143,6 +146,7 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const collapsed = ref(false)
+const openKeys = ref(['salesperson'])
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
 const userInfo = computed(() => userStore.userInfo)
@@ -152,6 +156,7 @@ const selectedKeys = computed(() => {
   const path = route.path
   if (path.startsWith('/records')) return ['/records']
   if (path.startsWith('/salespersons')) return ['/salespersons']
+  if (path.startsWith('/institutions')) return ['/institutions']
   if (path.startsWith('/doctors')) return ['/doctors']
   if (path === '/config') return ['/config']
   return ['/dashboard']
@@ -161,7 +166,8 @@ const selectedKeys = computed(() => {
 const pageTitleMap = {
   '/dashboard': '工作台',
   '/records': '病例管理',
-  '/salespersons': '业务员管理',
+  '/salespersons': '我的业务员',
+  '/institutions': '机构管理',
   '/doctors': '医生管理',
   '/config': '系统配置'
 }
@@ -169,6 +175,18 @@ const currentPageTitle = computed(() => {
   if (route.path.startsWith('/records/') && route.params.id) return '病例详情'
   return pageTitleMap[route.path] || ''
 })
+
+watch(
+  () => route.path,
+  (path) => {
+    if (path.startsWith('/salespersons') || path.startsWith('/institutions')) {
+      if (!openKeys.value.includes('salesperson')) {
+        openKeys.value = [...openKeys.value, 'salesperson']
+      }
+    }
+  },
+  { immediate: true }
+)
 
 function onMenuClick({ key }) {
   router.push(key)

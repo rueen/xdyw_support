@@ -35,6 +35,16 @@
             @dropdown-visible-change="onSearchParentDropdownOpen"
           />
         </a-form-item>
+        <a-form-item label="所属机构">
+          <a-select
+            v-model:value="searchForm.institutionId"
+            placeholder="请选择"
+            allow-clear
+            style="width: 180px"
+            :options="institutionOptions"
+            :field-names="{ label: 'name', value: 'id' }"
+          />
+        </a-form-item>
         <a-form-item label="状态">
           <a-select v-model:value="searchForm.status" placeholder="请选择" allow-clear style="width: 110px">
             <a-select-option value="normal">正常</a-select-option>
@@ -63,7 +73,7 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
-        :scroll="{ x: 1100 }"
+        :scroll="{ x: 1250 }"
         @change="onTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -131,6 +141,15 @@
             @change="onFormRegionChange"
           />
         </a-form-item>
+        <a-form-item label="所属机构" name="institutionId">
+          <a-select
+            v-model:value="form.institutionId"
+            placeholder="请选择（选填）"
+            allow-clear
+            :options="institutionOptions"
+            :field-names="{ label: 'name', value: 'id' }"
+          />
+        </a-form-item>
         <a-form-item label="上级业务员" name="parent_id">
           <a-select
             v-model:value="form.parent_id"
@@ -166,6 +185,7 @@ import {
   updateSalesperson,
   deleteSalesperson
 } from '@/api/salesperson'
+import { getInstitutionList } from '@/api/institution'
 import { buildRegionOptions, findRegionOptions } from '@/utils/region'
 import { useUserStore } from '@/stores/user'
 
@@ -180,12 +200,24 @@ const currentUserOption = computed(() => ({
 // ===================== 省市区数据 =====================
 const regionOptions = buildRegionOptions()
 
+// ===================== 机构数据 =====================
+const institutionOptions = ref([])
+
+/**
+ * 加载机构下拉选项（仅正常状态）
+ */
+async function loadInstitutionOptions() {
+  const res = await getInstitutionList({ page: 1, pageSize: 100, status: 'normal' })
+  institutionOptions.value = res.data?.list || []
+}
+
 // ===================== 搜索 =====================
 const searchForm = reactive({
   name: '',
   phone: '',
   region: [],
   parent_id: undefined,
+  institutionId: undefined,
   status: undefined
 })
 
@@ -209,7 +241,7 @@ function handleSearch() {
 }
 
 function resetSearch() {
-  Object.assign(searchForm, { name: '', phone: '', region: [], parent_id: undefined, status: undefined })
+  Object.assign(searchForm, { name: '', phone: '', region: [], parent_id: undefined, institutionId: undefined, status: undefined })
   Object.assign(searchRegionCodes, { provinceCode: '', cityCode: '', districtCode: '' })
   pagination.current = 1
   fetchList()
@@ -223,7 +255,8 @@ const pagination = reactive({ current: 1, pageSize: 10, total: 0, showSizeChange
 const columns = [
   { title: '姓名', dataIndex: 'name', key: 'name', width: 100 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
-  { title: '所在地区', key: 'region', width: 200 },
+  { title: '所在地区', key: 'region', width: 180 },
+  { title: '所属机构', dataIndex: 'institution_name', key: 'institution_name', width: 140, ellipsis: true },
   { title: '上级业务员', dataIndex: 'parent_name', key: 'parent_name', width: 110 },
   { title: '状态', key: 'status', width: 80 },
   { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 160 },
@@ -243,6 +276,7 @@ async function fetchList() {
     if (searchRegionCodes.cityCode) params.cityCode = searchRegionCodes.cityCode
     if (searchRegionCodes.districtCode) params.districtCode = searchRegionCodes.districtCode
     if (searchForm.parent_id) params.parentId = searchForm.parent_id
+    if (searchForm.institutionId) params.institutionId = searchForm.institutionId
     if (searchForm.status) params.status = searchForm.status
 
     const res = await getSalespersonList(params)
@@ -362,6 +396,7 @@ const form = reactive({
   phone: '',
   password: '',
   region: [],
+  institutionId: undefined,
   parent_id: undefined,
   status: 'normal'
 })
@@ -383,6 +418,7 @@ function openCreateModal() {
   form.phone = ''
   form.password = ''
   form.region = []
+  form.institutionId = undefined
   form.parent_id = currentUserOption.value.value
   form.status = 'normal'
   // 确保 select 能显示当前用户的 label，而不是原始 ID
@@ -408,6 +444,7 @@ function openEditModal(record) {
   form.phone = record.phone
   form.password = ''
   form.region = regionCodes
+  form.institutionId = record.institution_id || undefined
   form.parent_id = record.parent_id
   form.status = record.status
 
@@ -436,6 +473,8 @@ async function submitForm() {
       parent_id: form.parent_id,
       status: form.status
     }
+    if (form.institutionId) payload.institutionId = form.institutionId
+    else if (editingRecord.value) payload.institutionId = null
     if (form.password) payload.password = form.password
 
     if (editingRecord.value) {
@@ -464,6 +503,7 @@ async function doDelete(record) {
 }
 
 onMounted(() => {
+  loadInstitutionOptions()
   fetchList()
 })
 </script>

@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 /**
  * 获取业务员列表
- * @param {object} params - { name, phone, provinceCode, cityCode, districtCode, parentId, status, page, pageSize }
+ * @param {object} params - { name, phone, provinceCode, cityCode, districtCode, institutionId, parentId, status, page, pageSize }
  */
 export function getSalespersonList(params) {
   return request.get('/salespersons', { params })
@@ -26,7 +26,7 @@ export function getSubordinates(params) {
 
 /**
  * 新增业务员
- * @param {object} data - { name, phone, password, province, city, district, parentId }
+ * @param {object} data - { name, phone, password, province_code, province_name, city_code, city_name, district_code, district_name, institutionId, parent_id }
  */
 export function createSalesperson(data) {
   return request.post('/salespersons', data)

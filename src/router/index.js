@@ -35,7 +35,13 @@ const routes = [
         path: 'salespersons',
         name: 'Salespersons',
         component: () => import('@/views/salesperson/index.vue'),
-        meta: { title: '业务员管理', notDoctor: true }
+        meta: { title: '我的业务员', notDoctor: true }
+      },
+      {
+        path: 'institutions',
+        name: 'Institutions',
+        component: () => import('@/views/institution/index.vue'),
+        meta: { title: '机构管理', superAdmin: true }
       },
       {
         path: 'doctors',
