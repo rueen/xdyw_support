@@ -60,8 +60,8 @@
           <span class="page-title">{{ currentPageTitle }}</span>
         </div>
         <div class="header-right">
-          <!-- 通知铃铛（医生不显示） -->
-          <notification-bell v-if="!isDoctor" />
+          <!-- 通知铃铛（医生不显示；需同时判断已登录，避免退出时 userInfo 清空导致误挂载） -->
+          <notification-bell v-if="isLoggedIn && !isDoctor" />
 
           <!-- 用户信息下拉 -->
           <a-dropdown placement="bottomRight">
@@ -149,6 +149,7 @@ const collapsed = ref(false)
 const openKeys = ref(['salesperson'])
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
+const isLoggedIn = computed(() => userStore.isLoggedIn)
 const userInfo = computed(() => userStore.userInfo)
 
 /** 当前高亮菜单 */

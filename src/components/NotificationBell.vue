@@ -53,6 +53,7 @@ const loading = ref(false)
 
 /** 页面加载时请求一次未读数 */
 async function fetchUnreadCount() {
+  if (!localStorage.getItem('token')) return
   try {
     const res = await getNotifications({ page: 1, pageSize: 1 })
     unreadCount.value = res.data?.unreadCount || 0
@@ -63,7 +64,7 @@ async function fetchUnreadCount() {
 
 /** 下拉打开时加载通知列表 */
 async function onDropdownChange(open) {
-  if (!open) return
+  if (!open || !localStorage.getItem('token')) return
   loading.value = true
   try {
     const res = await getNotifications({ page: 1, pageSize: 10 })
