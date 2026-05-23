@@ -39,7 +39,7 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item v-if="!isDoctor" label="所属机构">
+        <a-form-item v-if="isSuperAdmin" label="所属机构">
           <a-select
             v-model:value="searchForm.institutionId"
             placeholder="请选择"
@@ -47,6 +47,22 @@
             style="width: 160px"
             :options="institutionOptions"
             :field-names="{ label: 'name', value: 'id' }"
+            @change="onInstitutionChange"
+          />
+        </a-form-item>
+        <a-form-item v-if="!isDoctor" label="业务员">
+          <a-select
+            v-model:value="searchForm.salespersonId"
+            placeholder="姓名/手机号搜索"
+            allow-clear
+            style="width: 180px"
+            show-search
+            :filter-option="false"
+            :loading="salespersonSearchLoading"
+            :options="salespersonOptions"
+            :field-names="{ label: 'label', value: 'value' }"
+            @search="onSalespersonSearch"
+            @dropdown-visible-change="onSalespersonDropdownOpen"
           />
         </a-form-item>
         <a-form-item label="状态">
@@ -466,6 +482,7 @@ import {
 } from '@/api/record'
 import { getActiveDoctors } from '@/api/doctor'
 import { getInstitutionList } from '@/api/institution'
+import { getSalespersonList } from '@/api/salesperson'
 import ImageUpload from '@/components/ImageUpload.vue'
 
 const router = useRouter()
@@ -492,6 +509,7 @@ const searchForm = reactive({
   patientIdCard: '',
   doctorId: undefined,
   institutionId: undefined,
+  salespersonId: undefined,
   status: undefined,
   paymentStatus: undefined,
   createdAtStart: undefined,
@@ -536,11 +554,13 @@ function resetSearch() {
     patientIdCard: '',
     doctorId: undefined,
     institutionId: undefined,
+    salespersonId: undefined,
     status: undefined,
     paymentStatus: undefined,
     createdAtStart: undefined,
     createdAtEnd: undefined
   })
+  salespersonOptions.value = []
   createdAtRange.value = []
   pagination.current = 1
   fetchList()
@@ -617,6 +637,66 @@ async function fetchInstitutions() {
   } catch {
     // 静默失败
   }
+}
+
+// ===================== 业务员搜索 =====================
+const salespersonOptions = ref([])
+const salespersonSearchLoading = ref(false)
+let salespersonSearchTimer = null
+
+/**
+ * 构建业务员下拉查询参数
+ * @param {string} [keyword] - 姓名/手机号关键字
+ * @returns {object}
+ */
+function buildSalespersonSearchParams(keyword) {
+  const params = { page: 1, pageSize: 20, status: 'normal' }
+  if (keyword) params.keyword = keyword
+  if (searchForm.institutionId) params.institutionId = searchForm.institutionId
+  return params
+}
+
+/**
+ * 加载业务员下拉选项
+ * @param {string} [keyword] - 姓名/手机号关键字
+ */
+async function loadSalespersonOptions(keyword = '') {
+  salespersonSearchLoading.value = true
+  try {
+    const res = await getSalespersonList(buildSalespersonSearchParams(keyword))
+    salespersonOptions.value = (res.data?.list || []).map((s) => ({
+      value: s.id,
+      label: `${s.name} - ${s.phone}`
+    }))
+  } catch {
+    salespersonOptions.value = []
+  } finally {
+    salespersonSearchLoading.value = false
+  }
+}
+
+/**
+ * 防抖搜索业务员
+ * @param {string} keyword
+ */
+function onSalespersonSearch(keyword) {
+  clearTimeout(salespersonSearchTimer)
+  salespersonSearchTimer = setTimeout(() => {
+    loadSalespersonOptions(keyword)
+  }, 300)
+}
+
+/** 业务员下拉打开时加载第一页 */
+function onSalespersonDropdownOpen(open) {
+  if (open) loadSalespersonOptions()
+}
+
+/**
+ * 所属机构变化时，清空已选业务员并刷新业务员下拉数据
+ */
+function onInstitutionChange() {
+  searchForm.salespersonId = undefined
+  salespersonOptions.value = []
 }
 
 // ===================== 新增/编辑病例 =====================
@@ -912,7 +992,9 @@ onMounted(() => {
   fetchList()
   if (!isDoctor.value) {
     fetchDoctors()
-    fetchInstitutions()
+    if (isSuperAdmin.value) {
+      fetchInstitutions()
+    }
   }
 })
 </script>

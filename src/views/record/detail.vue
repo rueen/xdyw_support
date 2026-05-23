@@ -24,7 +24,10 @@
                 <a-descriptions-item label="手机号">{{ record.patient_phone }}</a-descriptions-item>
                 <a-descriptions-item label="身份证号" :span="2">{{ record.patient_id_card }}</a-descriptions-item>
                 <a-descriptions-item label="指派医生">{{ record.doctor_name }}</a-descriptions-item>
-                <a-descriptions-item label="录入业务员">{{ record.salesperson_name }}</a-descriptions-item>
+                <a-descriptions-item label="录入业务员">
+                  <span>{{ record.salesperson_name }}</span>
+                  <a-tag color="orange" v-if="record.institution_name" style="margin-left: 10px">{{ record.institution_name }}</a-tag>
+                </a-descriptions-item>
                 <a-descriptions-item label="创建时间">{{ record.created_at }}</a-descriptions-item>
                 <a-descriptions-item label="更新时间">{{ record.updated_at }}</a-descriptions-item>
                 <a-descriptions-item
