@@ -388,15 +388,19 @@ const isOwnRecord = computed(() =>
   record.value?.salesperson_id === userStore.userInfo?.id
 )
 
-/** 当前登录者是否对本病例有操作权限（本人录入 或 超管） */
-const canOperate = computed(() => isSuperAdmin.value || isOwnRecord.value)
+/** 当前登录者是否对本病例有业务员侧操作权限（本人录入或超管，医生角色除外） */
+const canOperate = computed(
+  () => !isDoctor.value && (isSuperAdmin.value || isOwnRecord.value)
+)
 
 /** 是否有可操作按钮 */
 const hasActions = computed(() => {
   if (!record.value) return false
   const s = record.value.status
   const ps = record.value.payment_status
-  if (isDoctor.value && s === 'pending_review') return true
+  if (isDoctor.value) {
+    return s === 'pending_review'
+  }
   if (canOperate.value && s !== 'completed') return true
   if (canOperate.value && (ps === 'pending_payment' || ps === 'paid')) return true
   return false
