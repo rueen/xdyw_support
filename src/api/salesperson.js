@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 /**
  * 获取业务员列表
- * @param {object} params - { name, phone, province, city, district, parentId, status, page, pageSize }
+ * @param {object} params - { name, phone, provinceCode, cityCode, districtCode, parentId, status, page, pageSize }
  */
 export function getSalespersonList(params) {
   return request.get('/salespersons', { params })

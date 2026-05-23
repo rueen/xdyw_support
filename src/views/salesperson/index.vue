@@ -189,12 +189,12 @@ const searchForm = reactive({
   status: undefined
 })
 
-// 搜索栏：Cascader value 为 code，从 selectedOptions 提取名称传给列表 API
-const searchRegionNames = reactive({ province: '', city: '', district: '' })
-function onSearchRegionChange(codes, selectedOptions) {
-  searchRegionNames.province = selectedOptions?.[0]?.name || ''
-  searchRegionNames.city = selectedOptions?.[1]?.name || ''
-  searchRegionNames.district = selectedOptions?.[2]?.name || ''
+// 搜索栏：Cascader value 为 code，传给列表 API
+const searchRegionCodes = reactive({ provinceCode: '', cityCode: '', districtCode: '' })
+function onSearchRegionChange(codes) {
+  searchRegionCodes.provinceCode = codes?.[0] || ''
+  searchRegionCodes.cityCode = codes?.[1] || ''
+  searchRegionCodes.districtCode = codes?.[2] || ''
 }
 
 // 表单弹窗：selectedOptions 含 .value(code) 和 .name，供提交时使用
@@ -210,7 +210,7 @@ function handleSearch() {
 
 function resetSearch() {
   Object.assign(searchForm, { name: '', phone: '', region: [], parent_id: undefined, status: undefined })
-  Object.assign(searchRegionNames, { province: '', city: '', district: '' })
+  Object.assign(searchRegionCodes, { provinceCode: '', cityCode: '', districtCode: '' })
   pagination.current = 1
   fetchList()
 }
@@ -239,10 +239,10 @@ async function fetchList() {
     }
     if (searchForm.name) params.name = searchForm.name
     if (searchForm.phone) params.phone = searchForm.phone
-    if (searchRegionNames.province) params.province = searchRegionNames.province
-    if (searchRegionNames.city) params.city = searchRegionNames.city
-    if (searchRegionNames.district) params.district = searchRegionNames.district
-    if (searchForm.parent_id) params.parent_id = searchForm.parent_id
+    if (searchRegionCodes.provinceCode) params.provinceCode = searchRegionCodes.provinceCode
+    if (searchRegionCodes.cityCode) params.cityCode = searchRegionCodes.cityCode
+    if (searchRegionCodes.districtCode) params.districtCode = searchRegionCodes.districtCode
+    if (searchForm.parent_id) params.parentId = searchForm.parent_id
     if (searchForm.status) params.status = searchForm.status
 
     const res = await getSalespersonList(params)
