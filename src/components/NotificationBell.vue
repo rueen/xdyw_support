@@ -29,6 +29,9 @@
               @click="handleClick(item)"
             >
               <div class="item-content">{{ item.content }}</div>
+              <div v-if="item.reminder_days != null" class="item-reminder">
+                复诊到期前 {{ item.reminder_days }} 天提醒
+              </div>
               <div class="item-time">{{ item.created_at }}</div>
             </div>
           </a-spin>
@@ -161,6 +164,11 @@ onMounted(() => {
     font-size: 13px;
     color: #333;
     line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .item-reminder {
+    font-size: 12px;
+    color: #fa8c16;
     margin-bottom: 4px;
   }
   .item-time {
