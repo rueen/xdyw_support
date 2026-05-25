@@ -173,9 +173,6 @@ onMounted(fetchConfigs)
 </script>
 
 <style lang="less" scoped>
-.page-container {
-  padding: 24px;
-}
 .config-card {
   margin-bottom: 16px;
   border-radius: 8px;
