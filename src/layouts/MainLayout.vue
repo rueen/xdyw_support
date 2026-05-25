@@ -1,7 +1,8 @@
 <template>
   <a-layout class="main-layout">
-    <!-- 侧边栏 -->
+    <!-- 桌面端：固定侧边栏 -->
     <a-layout-sider
+      v-if="!isMobile"
       v-model:collapsed="collapsed"
       collapsible
       :trigger="null"
@@ -45,17 +46,66 @@
       </a-menu>
     </a-layout-sider>
 
+    <!-- 移动端：Drawer 侧边栏 -->
+    <a-drawer
+      v-if="isMobile"
+      v-model:open="drawerVisible"
+      placement="left"
+      :width="220"
+      :closable="false"
+      :body-style="{ padding: 0, background: '#001529', height: '100%' }"
+      :header-style="{ display: 'none' }"
+    >
+      <div class="logo">
+        <span class="logo-text">鑫达医委管理系统</span>
+      </div>
+      <a-menu
+        v-model:selectedKeys="selectedKeys"
+        v-model:openKeys="openKeys"
+        theme="dark"
+        mode="inline"
+        @click="onMobileMenuClick"
+      >
+        <a-menu-item key="/dashboard">
+          <template #icon><dashboard-outlined /></template>
+          工作台
+        </a-menu-item>
+        <a-menu-item key="/records">
+          <template #icon><file-text-outlined /></template>
+          病例管理
+        </a-menu-item>
+        <a-sub-menu v-if="!isDoctor" key="salesperson">
+          <template #icon><team-outlined /></template>
+          <template #title>业务员管理</template>
+          <a-menu-item key="/salespersons">我的业务员</a-menu-item>
+          <a-menu-item v-if="isSuperAdmin" key="/institutions">机构管理</a-menu-item>
+        </a-sub-menu>
+        <a-menu-item v-if="isSuperAdmin" key="/doctors">
+          <template #icon><medicine-box-outlined /></template>
+          医生管理
+        </a-menu-item>
+        <a-menu-item v-if="isSuperAdmin" key="/config">
+          <template #icon><setting-outlined /></template>
+          系统配置
+        </a-menu-item>
+      </a-menu>
+    </a-drawer>
+
     <a-layout>
       <!-- 顶部 Header -->
-      <a-layout-header class="header" :style="{ left: collapsed ? '80px' : '220px' }">
+      <a-layout-header
+        class="header"
+        :style="isMobile ? { left: 0 } : { left: collapsed ? '80px' : '220px' }"
+      >
         <div class="header-left">
           <a-button
             type="text"
             class="collapse-btn"
-            @click="collapsed = !collapsed"
+            @click="isMobile ? (drawerVisible = true) : (collapsed = !collapsed)"
           >
-            <menu-unfold-outlined v-if="collapsed" />
-            <menu-fold-outlined v-else />
+            <menu-unfold-outlined v-if="!isMobile && collapsed" />
+            <menu-fold-outlined v-else-if="!isMobile && !collapsed" />
+            <menu-unfold-outlined v-else />
           </a-button>
           <span class="page-title">{{ currentPageTitle }}</span>
         </div>
@@ -86,7 +136,10 @@
       </a-layout-header>
 
       <!-- 内容区 -->
-      <a-layout-content class="content" :style="{ marginLeft: collapsed ? '80px' : '220px' }">
+      <a-layout-content
+        class="content"
+        :style="isMobile ? { marginLeft: 0 } : { marginLeft: collapsed ? '80px' : '220px' }"
+      >
         <router-view />
       </a-layout-content>
     </a-layout>
@@ -121,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -146,7 +199,17 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const collapsed = ref(false)
+const isMobile = ref(window.innerWidth < 768)
+const drawerVisible = ref(false)
 const openKeys = ref(['salesperson'])
+
+function handleResize() {
+  isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) drawerVisible.value = false
+}
+
+onMounted(() => window.addEventListener('resize', handleResize))
+onUnmounted(() => window.removeEventListener('resize', handleResize))
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
 const isLoggedIn = computed(() => userStore.isLoggedIn)
@@ -191,6 +254,12 @@ watch(
 
 function onMenuClick({ key }) {
   router.push(key)
+}
+
+/** 移动端菜单点击后关闭 Drawer */
+function onMobileMenuClick({ key }) {
+  router.push(key)
+  drawerVisible.value = false
 }
 
 /** 退出登录 */
@@ -282,6 +351,7 @@ function resetPwdForm() {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
   white-space: nowrap;
+  background: #001529;
 
   .logo-text {
     font-size: 15px;
@@ -344,7 +414,7 @@ function resetPwdForm() {
     }
     .user-name {
       margin: 0 6px;
-      max-width: 100px;
+      max-width: 80px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -357,5 +427,15 @@ function resetPwdForm() {
   transition: margin-left 0.2s;
   min-height: calc(100vh - 64px);
   background: #f0f2f5;
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding: 0 8px 0 0;
+
+    .page-title {
+      font-size: 14px;
+    }
+  }
 }
 </style>

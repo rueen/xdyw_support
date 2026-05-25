@@ -2,109 +2,147 @@
   <div class="page-container">
     <!-- 搜索区域 -->
     <div class="search-area">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
-        <a-form-item label="患者姓名">
-          <a-input
-            v-model:value="searchForm.patientName"
-            placeholder="请输入"
-            allow-clear
-            style="width: 140px"
-          />
-        </a-form-item>
-        <a-form-item label="手机号">
-          <a-input
-            v-model:value="searchForm.patientPhone"
-            placeholder="请输入"
-            allow-clear
-            style="width: 150px"
-          />
-        </a-form-item>
-        <a-form-item label="身份证号">
-          <a-input
-            v-model:value="searchForm.patientIdCard"
-            placeholder="请输入"
-            allow-clear
-            style="width: 180px"
-          />
-        </a-form-item>
-        <a-form-item v-if="!isDoctor" label="指派医生">
-          <a-select
-            v-model:value="searchForm.doctorId"
-            placeholder="请选择"
-            allow-clear
-            style="width: 130px"
-          >
-            <a-select-option v-for="d in doctorOptions" :key="d.id" :value="d.id">
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item v-if="isSuperAdmin" label="所属机构">
-          <a-select
-            v-model:value="searchForm.institutionId"
-            placeholder="请选择"
-            allow-clear
-            style="width: 160px"
-            :options="institutionOptions"
-            :field-names="{ label: 'name', value: 'id' }"
-            @change="onInstitutionChange"
-          />
-        </a-form-item>
-        <a-form-item v-if="!isDoctor" label="业务员">
-          <a-select
-            v-model:value="searchForm.salespersonId"
-            placeholder="姓名/手机号搜索"
-            allow-clear
-            style="width: 180px"
-            show-search
-            :filter-option="false"
-            :loading="salespersonSearchLoading"
-            :options="salespersonOptions"
-            :field-names="{ label: 'label', value: 'value' }"
-            @search="onSalespersonSearch"
-            @dropdown-visible-change="onSalespersonDropdownOpen"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择"
-            allow-clear
-            style="width: 140px"
-          >
-            <a-select-option
-              v-for="(v, k) in RECORD_STATUS"
-              :key="k"
-              :value="k"
-            >
-              {{ v.label }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="付费状态">
-          <a-select
-            v-model:value="searchForm.paymentStatus"
-            placeholder="请选择"
-            allow-clear
-            style="width: 120px"
-          >
-            <a-select-option v-for="(v, k) in PAYMENT_STATUS" :key="k" :value="k">
-              {{ v.label }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="创建时间">
-          <a-range-picker
-            v-model:value="createdAtRange"
-            value-format="YYYY-MM-DD"
-            style="width: 260px"
-            @change="onCreatedAtRangeChange"
-          />
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" html-type="submit">查询</a-button>
-          <a-button style="margin-left: 8px" @click="resetSearch">重置</a-button>
-        </a-form-item>
+      <a-form :model="searchForm" @finish="handleSearch">
+        <a-row :gutter="[16, 0]">
+          <!-- 始终显示的前2个搜索项 -->
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="患者姓名">
+              <a-input
+                v-model:value="searchForm.patientName"
+                placeholder="请输入"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="手机号">
+              <a-input
+                v-model:value="searchForm.patientPhone"
+                placeholder="请输入"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+
+          <!-- 移动端折叠区域：默认隐藏，展开后可见 -->
+          <template v-if="!isMobile || searchExpanded">
+            <a-col :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="身份证号">
+                <a-input
+                  v-model:value="searchForm.patientIdCard"
+                  placeholder="请输入"
+                  allow-clear
+                />
+              </a-form-item>
+            </a-col>
+            <a-col v-if="!isDoctor" :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="指派医生">
+                <a-select
+                  v-model:value="searchForm.doctorId"
+                  placeholder="请选择"
+                  allow-clear
+                  style="width: 100%"
+                >
+                  <a-select-option v-for="d in doctorOptions" :key="d.id" :value="d.id">
+                    {{ d.name }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col v-if="isSuperAdmin" :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="所属机构">
+                <a-select
+                  v-model:value="searchForm.institutionId"
+                  placeholder="请选择"
+                  allow-clear
+                  style="width: 100%"
+                  :options="institutionOptions"
+                  :field-names="{ label: 'name', value: 'id' }"
+                  @change="onInstitutionChange"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col v-if="!isDoctor" :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="业务员">
+                <a-select
+                  v-model:value="searchForm.salespersonId"
+                  placeholder="姓名/手机号搜索"
+                  allow-clear
+                  style="width: 100%"
+                  show-search
+                  :filter-option="false"
+                  :loading="salespersonSearchLoading"
+                  :options="salespersonOptions"
+                  :field-names="{ label: 'label', value: 'value' }"
+                  @search="onSalespersonSearch"
+                  @dropdown-visible-change="onSalespersonDropdownOpen"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="状态">
+                <a-select
+                  v-model:value="searchForm.status"
+                  placeholder="请选择"
+                  allow-clear
+                  style="width: 100%"
+                >
+                  <a-select-option
+                    v-for="(v, k) in RECORD_STATUS"
+                    :key="k"
+                    :value="k"
+                  >
+                    {{ v.label }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="付费状态">
+                <a-select
+                  v-model:value="searchForm.paymentStatus"
+                  placeholder="请选择"
+                  allow-clear
+                  style="width: 100%"
+                >
+                  <a-select-option v-for="(v, k) in PAYMENT_STATUS" :key="k" :value="k">
+                    {{ v.label }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :sm="24" :md="16" :lg="12">
+              <a-form-item label="创建时间">
+                <a-range-picker
+                  v-model:value="createdAtRange"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                  @change="onCreatedAtRangeChange"
+                />
+              </a-form-item>
+            </a-col>
+          </template>
+
+          <!-- 操作按钮行 -->
+          <a-col :xs="24" :sm="12" :md="8" :lg="6" class="search-btn-col">
+            <a-form-item>
+              <a-button type="primary" html-type="submit">查询</a-button>
+              <a-button style="margin-left: 8px" @click="resetSearch">重置</a-button>
+              <!-- 移动端展开/收起 -->
+              <a-button
+                v-if="isMobile"
+                type="link"
+                size="small"
+                style="margin-left: 4px"
+                @click="searchExpanded = !searchExpanded"
+              >
+                {{ searchExpanded ? '收起' : '更多' }}
+                <up-outlined v-if="searchExpanded" />
+                <down-outlined v-else />
+              </a-button>
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
     </div>
 
@@ -115,7 +153,7 @@
         <a-button
           v-if="isSalesperson"
           type="primary"
-          @click="openCreateModal"
+          @click="router.push('/records/new')"
         >
           <plus-outlined /> 新增病例
         </a-button>
@@ -127,7 +165,7 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
-        :scroll="{ x: 1200 }"
+        :scroll="{ x: 'max-content' }"
         @change="onTableChange"
       >
         <!-- 状态 Tag -->
@@ -157,167 +195,92 @@
             <a-space wrap>
               <a-button type="link" size="small" @click="goDetail(record)">详情</a-button>
 
-              <!-- 业务员本人 / 超管：编辑 -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status !== 'completed'"
-                type="link"
-                size="small"
-                @click="openEditModal(record)"
-              >
-                编辑
-              </a-button>
+              <!-- PC端操作按钮（移动端全部收入详情页） -->
+              <template v-if="!isMobile">
+                <!-- 医生：判读操作（仅 pending_review） -->
+                <template v-if="isDoctor && record.status === 'pending_review'">
+                  <a-button type="link" size="small" style="color: #52c41a" @click="doReview(record, 'review_suitable')">
+                    符合用药
+                  </a-button>
+                  <a-button type="link" size="small" style="color: #ff4d4f" @click="doReview(record, 'review_unsuitable')">
+                    不符合用药
+                  </a-button>
+                  <a-button type="link" size="small" style="color: #fa8c16" @click="openIncompleteModal(record)">
+                    资料不全
+                  </a-button>
+                </template>
 
-              <!-- 医生：判读操作（仅 pending_review） -->
-              <template v-if="isDoctor && record.status === 'pending_review'">
-                <a-button type="link" size="small" style="color: #52c41a" @click="doReview(record, 'review_suitable')">
-                  符合用药
+                <!-- 业务员本人 / 超管：已就诊（suitable） -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'suitable'"
+                  type="link"
+                  size="small"
+                  style="color: #722ed1"
+                  @click="doVisited(record)"
+                >
+                  已就诊
                 </a-button>
-                <a-button type="link" size="small" style="color: #ff4d4f" @click="doReview(record, 'review_unsuitable')">
-                  不符合用药
+
+                <!-- 业务员本人 / 超管：已复诊（pending_follow_up） -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'pending_follow_up'"
+                  type="link"
+                  size="small"
+                  style="color: #1677ff"
+                  @click="openFollowUpModal(record)"
+                >
+                  已复诊
                 </a-button>
-                <a-button type="link" size="small" style="color: #fa8c16" @click="openIncompleteModal(record)">
-                  资料不全
+
+                <!-- 业务员本人 / 超管：补充资料（incomplete） -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'incomplete'"
+                  type="link"
+                  size="small"
+                  style="color: #fa8c16"
+                  @click="openSupplementModal(record)"
+                >
+                  补充资料
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已完诊 -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status !== 'completed'"
+                  type="link"
+                  size="small"
+                  style="color: #999"
+                  @click="doComplete(record)"
+                >
+                  已完诊
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已付费（待付费状态） -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'pending_payment'"
+                  type="link"
+                  size="small"
+                  style="color: #1677ff"
+                  @click="openPayModal(record)"
+                >
+                  已付费
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已退费（已付费状态） -->
+                <a-button
+                  v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'paid'"
+                  type="link"
+                  size="small"
+                  style="color: #ff4d4f"
+                  @click="openRefundModal(record)"
+                >
+                  已退费
                 </a-button>
               </template>
-
-              <!-- 业务员本人 / 超管：已就诊（suitable） -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'suitable'"
-                type="link"
-                size="small"
-                style="color: #722ed1"
-                @click="doVisited(record)"
-              >
-                已就诊
-              </a-button>
-
-              <!-- 业务员本人 / 超管：已复诊（pending_follow_up） -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'pending_follow_up'"
-                type="link"
-                size="small"
-                style="color: #1677ff"
-                @click="openFollowUpModal(record)"
-              >
-                已复诊
-              </a-button>
-
-              <!-- 业务员本人 / 超管：补充资料（incomplete） -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status === 'incomplete'"
-                type="link"
-                size="small"
-                style="color: #fa8c16"
-                @click="openSupplementModal(record)"
-              >
-                补充资料
-              </a-button>
-
-              <!-- 业务员本人 / 超管：已完诊 -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.status !== 'completed'"
-                type="link"
-                size="small"
-                style="color: #999"
-                @click="doComplete(record)"
-              >
-                已完诊
-              </a-button>
-
-              <!-- 业务员本人 / 超管：已付费（待付费状态） -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'pending_payment'"
-                type="link"
-                size="small"
-                style="color: #1677ff"
-                @click="openPayModal(record)"
-              >
-                已付费
-              </a-button>
-
-              <!-- 业务员本人 / 超管：已退费（已付费状态） -->
-              <a-button
-                v-if="(isSalesperson && isOwnRecord(record) || isSuperAdmin) && record.payment_status === 'paid'"
-                type="link"
-                size="small"
-                style="color: #ff4d4f"
-                @click="openRefundModal(record)"
-              >
-                已退费
-              </a-button>
-
-              <!-- 超管：删除 -->
-              <a-popconfirm
-                v-if="isSuperAdmin"
-                title="确定要删除该病例吗？"
-                @confirm="doDelete(record)"
-              >
-                <a-button type="link" size="small" danger>删除</a-button>
-              </a-popconfirm>
             </a-space>
           </template>
         </template>
       </a-table>
     </div>
-
-    <!-- 新增/编辑病例 Modal -->
-    <a-modal
-      v-model:open="recordModalVisible"
-      :title="editingRecord ? '编辑病例' : '新增病例'"
-      width="680px"
-      :confirm-loading="submitLoading"
-      @ok="submitRecordForm"
-      @cancel="closeRecordModal"
-    >
-      <a-form
-        ref="recordFormRef"
-        :model="recordForm"
-        :rules="recordRules"
-        layout="vertical"
-        style="margin-top: 16px"
-      >
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="患者姓名" name="patientName">
-              <a-input v-model:value="recordForm.patientName" placeholder="请输入" :maxlength="50" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="患者手机号" name="patientPhone">
-              <a-input v-model:value="recordForm.patientPhone" placeholder="请输入" :maxlength="11" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="身份证号" name="patientIdCard">
-              <a-input v-model:value="recordForm.patientIdCard" placeholder="请输入18位身份证号" :maxlength="18" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="指派医生" name="doctorId">
-              <a-select v-model:value="recordForm.doctorId" placeholder="请选择医生">
-                <a-select-option v-for="d in doctorOptions" :key="d.id" :value="d.id">
-                  {{ d.name }}（{{ d.phone }}）
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="病情描述" name="description">
-          <a-textarea
-            v-model:value="recordForm.description"
-            placeholder="请描述病情（最多300字）"
-            :maxlength="300"
-            :rows="4"
-            show-count
-          />
-        </a-form-item>
-        <a-form-item label="照片（最多10张）" name="photos">
-          <image-upload v-model="recordForm.photos" :max-count="10" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
 
     <!-- 资料不全备注 Modal -->
     <a-modal
@@ -464,13 +427,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { RECORD_STATUS, PAYMENT_STATUS } from '@/utils/constants'
 import {
   getRecordList,
-  createRecord,
-  updateRecord,
   deleteRecord,
   reviewRecord,
   visitRecord,
@@ -492,6 +454,9 @@ const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
 const isSalesperson = computed(() => userStore.isSalesperson)
+
+const { isMobile } = useIsMobile()
+const searchExpanded = ref(false)
 
 /**
  * 判断某条病例是否由当前登录业务员本人录入
@@ -572,7 +537,14 @@ const tableData = ref([])
 const pagination = reactive({ current: 1, pageSize: 10, total: 0, showSizeChanger: true, showQuickJumper: true })
 
 const columns = computed(() => {
-  const base = [
+  if (isMobile.value) {
+    return [
+      { title: '患者姓名', dataIndex: 'patient_name', key: 'patient_name', ellipsis: true },
+      { title: '状态', key: 'status', width: 100 },
+      { title: '操作', key: 'action', fixed: 'right', width: 60 }
+    ]
+  }
+  return [
     { title: '患者姓名', dataIndex: 'patient_name', key: 'patient_name', width: 100, ellipsis: true },
     { title: '手机号', dataIndex: 'patient_phone', key: 'patient_phone', width: 130 },
     { title: '身份证号', dataIndex: 'patient_id_card', key: 'patient_id_card', width: 180, ellipsis: true },
@@ -584,7 +556,6 @@ const columns = computed(() => {
     { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 160 },
     { title: '操作', key: 'action', fixed: 'right', width: 280 }
   ]
-  return base
 })
 
 async function fetchList() {
@@ -699,85 +670,7 @@ function onInstitutionChange() {
   salespersonOptions.value = []
 }
 
-// ===================== 新增/编辑病例 =====================
-const recordModalVisible = ref(false)
-const editingRecord = ref(null)
 const submitLoading = ref(false)
-const recordFormRef = ref()
-const recordForm = reactive({
-  patientName: '',
-  patientPhone: '',
-  patientIdCard: '',
-  doctorId: undefined,
-  description: '',
-  photos: []
-})
-
-const recordRules = {
-  patientName: [{ required: true, message: '请输入患者姓名' }],
-  patientPhone: [
-    { required: true, message: '请输入患者手机号' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }
-  ],
-  patientIdCard: [
-    { required: true, message: '请输入身份证号' },
-    { len: 18, message: '身份证号为18位' }
-  ],
-  doctorId: [{ required: true, message: '请选择指派医生' }]
-}
-
-function openCreateModal() {
-  editingRecord.value = null
-  Object.assign(recordForm, {
-    patientName: '', patientPhone: '', patientIdCard: '',
-    doctorId: undefined, description: '', photos: []
-  })
-  recordModalVisible.value = true
-}
-
-function openEditModal(record) {
-  editingRecord.value = record
-  Object.assign(recordForm, {
-    patientName: record.patient_name,
-    patientPhone: record.patient_phone,
-    patientIdCard: record.patient_id_card,
-    doctorId: record.doctor_id,
-    description: record.description || '',
-    photos: record.photos || []
-  })
-  recordModalVisible.value = true
-}
-
-async function submitRecordForm() {
-  await recordFormRef.value.validate()
-  submitLoading.value = true
-  try {
-    const payload = {
-      patientName: recordForm.patientName,
-      patientPhone: recordForm.patientPhone,
-      patientIdCard: recordForm.patientIdCard,
-      doctorId: recordForm.doctorId,
-      description: recordForm.description,
-      photos: recordForm.photos
-    }
-    if (editingRecord.value) {
-      await updateRecord(editingRecord.value.id, payload)
-      message.success('病例更新成功')
-    } else {
-      await createRecord(payload)
-      message.success('病例创建成功')
-    }
-    recordModalVisible.value = false
-    fetchList()
-  } finally {
-    submitLoading.value = false
-  }
-}
-
-function closeRecordModal() {
-  recordFormRef.value?.resetFields()
-  recordForm.photos = []
-}
 
 // ===================== 医生判读 =====================
 async function doReview(record, operation) {
@@ -1005,18 +898,14 @@ onMounted(() => {
 }
 .search-area {
   background: #fff;
-  padding: 20px 24px;
+  padding: 20px 24px 4px;
   margin-bottom: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-
-  :deep(.ant-form-inline) {
-    gap: 16px;
-  }
-
-  :deep(.ant-form-inline .ant-form-item) {
-    margin-bottom: 0;
-    margin-right: 0;
+}
+.search-btn-col {
+  :deep(.ant-form-item) {
+    margin-bottom: 16px;
   }
 }
 .table-area {
@@ -1034,5 +923,22 @@ onMounted(() => {
 .total-tip {
   color: #666;
   font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding: 12px;
+  }
+  .search-area {
+    padding: 16px 16px 4px;
+    margin-bottom: 12px;
+  }
+  .table-area {
+    padding: 12px;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 </style>

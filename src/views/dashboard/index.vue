@@ -13,15 +13,15 @@
         v-if="rangeType === 'custom'"
         v-model:value="customRange"
         :value-format="'YYYY-MM-DD'"
-        style="margin-left: 16px"
+        class="custom-range-picker"
         @change="onCustomRangeChange"
       />
     </div>
 
     <!-- 统计数据 -->
     <a-spin :spinning="loading">
-      <a-row :gutter="[16, 16]" class="stats-row">
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+      <a-row :gutter="[12, 12]" class="stats-row">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card new-cases" @click="goRecords()">
             <div class="stat-icon"><plus-circle-outlined /></div>
             <div class="stat-info">
@@ -30,7 +30,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card pending-review" @click="goRecords('pending_review')">
             <div class="stat-icon"><clock-circle-outlined /></div>
             <div class="stat-info">
@@ -39,7 +39,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card suitable" @click="goRecords('suitable')">
             <div class="stat-icon"><check-circle-outlined /></div>
             <div class="stat-info">
@@ -48,7 +48,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card unsuitable" @click="goRecords('unsuitable')">
             <div class="stat-icon"><close-circle-outlined /></div>
             <div class="stat-info">
@@ -57,7 +57,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card visited" @click="goRecords('pending_follow_up')">
             <div class="stat-icon"><medicine-box-outlined /></div>
             <div class="stat-info">
@@ -66,7 +66,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :xs="24" :sm="12" :md="8" :lg="8" :xl="4">
+        <a-col :xs="12" :sm="12" :md="8" :lg="8" :xl="4">
           <div class="stat-card incomplete" @click="goRecords('incomplete')">
             <div class="stat-icon"><exclamation-circle-outlined /></div>
             <div class="stat-info">
@@ -212,18 +212,22 @@ onMounted(fetchStats)
 </script>
 
 <style lang="less" scoped>
-.page-container {
-  padding: 24px;
-}
 
 .time-filter-area {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 24px;
   padding: 20px 24px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.custom-range-picker {
+  flex: 1;
+  min-width: 200px;
 }
 
 .stats-row {
@@ -240,6 +244,7 @@ onMounted(fetchStats)
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  height: 100%;
 
   &:hover {
     transform: translateY(-2px);
@@ -300,5 +305,44 @@ onMounted(fetchStats)
   color: #999;
   font-size: 13px;
   padding: 0 4px;
+}
+
+@media (max-width: 767px) {
+  .time-filter-area {
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .custom-range-picker {
+    width: 100%;
+    flex: none;
+  }
+
+  .stats-row {
+    margin-bottom: 12px;
+  }
+
+  .stat-card {
+    padding: 14px 12px;
+    gap: 10px;
+    border-radius: 8px;
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      font-size: 20px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+  }
 }
 </style>

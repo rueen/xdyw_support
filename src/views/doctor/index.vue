@@ -2,38 +2,63 @@
   <div class="page-container">
     <!-- 搜索区域 -->
     <div class="search-area">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
-        <a-form-item label="姓名">
-          <a-input
-            v-model:value="searchForm.name"
-            placeholder="请输入"
-            allow-clear
-            style="width: 140px"
-          />
-        </a-form-item>
-        <a-form-item label="手机号">
-          <a-input
-            v-model:value="searchForm.phone"
-            placeholder="请输入"
-            allow-clear
-            style="width: 160px"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择"
-            allow-clear
-            style="width: 110px"
-          >
-            <a-select-option value="normal">正常</a-select-option>
-            <a-select-option value="disabled">停用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" html-type="submit">查询</a-button>
-          <a-button style="margin-left: 8px" @click="resetSearch">重置</a-button>
-        </a-form-item>
+      <a-form :model="searchForm" @finish="handleSearch">
+        <a-row :gutter="[16, 0]">
+          <!-- 始终显示的前2个搜索项 -->
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="姓名">
+              <a-input
+                v-model:value="searchForm.name"
+                placeholder="请输入"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="手机号">
+              <a-input
+                v-model:value="searchForm.phone"
+                placeholder="请输入"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+
+          <!-- 移动端折叠区域 -->
+          <template v-if="!isMobile || searchExpanded">
+            <a-col :xs="24" :sm="12" :md="8" :lg="6">
+              <a-form-item label="状态">
+                <a-select
+                  v-model:value="searchForm.status"
+                  placeholder="请选择"
+                  allow-clear
+                  style="width: 100%"
+                >
+                  <a-select-option value="normal">正常</a-select-option>
+                  <a-select-option value="disabled">停用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </template>
+
+          <a-col :xs="24" :sm="12" :md="8" :lg="6" class="search-btn-col">
+            <a-form-item>
+              <a-button type="primary" html-type="submit">查询</a-button>
+              <a-button style="margin-left: 8px" @click="resetSearch">重置</a-button>
+              <a-button
+                v-if="isMobile"
+                type="link"
+                size="small"
+                style="margin-left: 4px"
+                @click="searchExpanded = !searchExpanded"
+              >
+                {{ searchExpanded ? '收起' : '更多' }}
+                <up-outlined v-if="searchExpanded" />
+                <down-outlined v-else />
+              </a-button>
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
     </div>
 
@@ -52,6 +77,7 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
+        :scroll="{ x: 'max-content' }"
         @change="onTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -113,8 +139,12 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, UpOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { getDoctorList, createDoctor, updateDoctor, deleteDoctor } from '@/api/doctor'
+import { useIsMobile } from '@/composables/useIsMobile'
+
+const { isMobile } = useIsMobile()
+const searchExpanded = ref(false)
 
 // ===================== 搜索 =====================
 const searchForm = reactive({ name: '', phone: '', status: undefined })
@@ -238,18 +268,14 @@ onMounted(fetchList)
 .page-container { padding: 24px; }
 .search-area {
   background: #fff;
-  padding: 20px 24px;
+  padding: 20px 24px 4px;
   margin-bottom: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-
-  :deep(.ant-form-inline) {
-    gap: 16px;
-  }
-
-  :deep(.ant-form-inline .ant-form-item) {
-    margin-bottom: 0;
-    margin-right: 0;
+}
+.search-btn-col {
+  :deep(.ant-form-item) {
+    margin-bottom: 16px;
   }
 }
 .table-area {
@@ -265,4 +291,17 @@ onMounted(fetchList)
   margin-bottom: 16px;
 }
 .total-tip { color: #666; font-size: 14px; }
+
+@media (max-width: 767px) {
+  .page-container { padding: 12px; }
+  .search-area {
+    padding: 16px 16px 4px;
+    margin-bottom: 12px;
+  }
+  .table-area { padding: 12px; }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
 </style>

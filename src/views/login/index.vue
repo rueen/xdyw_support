@@ -171,12 +171,18 @@ async function handleLogin() {
 
 .login-box {
   width: 420px;
+  max-width: calc(100vw - 32px);
   background: #fff;
   border-radius: 16px;
   padding: 48px 40px 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   position: relative;
   z-index: 1;
+
+  @media (max-width: 767px) {
+    padding: 36px 24px 28px;
+    border-radius: 12px;
+  }
 }
 
 .login-header {
@@ -204,6 +210,10 @@ async function handleLogin() {
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 6px;
+
+  @media (max-width: 767px) {
+    font-size: 18px;
+  }
 }
 
 .login-subtitle {

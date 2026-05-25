@@ -10,8 +10,111 @@
 
       <template v-if="record">
         <a-row :gutter="16">
+          <!-- 移动端：操作区域优先展示 -->
+          <a-col v-if="isMobile" :xs="24">
+            <a-card title="病例操作" class="info-card">
+              <a-space direction="vertical" style="width: 100%" :size="10">
+                <!-- 编辑（业务员本人 / 超管，未完诊） -->
+                <a-button
+                  v-if="canOperate && record.status !== 'completed'"
+                  block
+                  @click="router.push(`/records/${record.id}/edit`)"
+                >
+                  <edit-outlined /> 编辑病例
+                </a-button>
+
+                <!-- 医生判读 -->
+                <template v-if="isDoctor && record.status === 'pending_review'">
+                  <a-button type="primary" block style="background: #52c41a; border-color: #52c41a" @click="doReview('review_suitable')">
+                    <check-outlined /> 符合用药
+                  </a-button>
+                  <a-button danger block @click="doReview('review_unsuitable')">
+                    <close-outlined /> 不符合用药
+                  </a-button>
+                  <a-button block style="background: #fa8c16; border-color: #fa8c16; color: #fff" @click="openIncompleteModal">
+                    <exclamation-outlined /> 资料不全
+                  </a-button>
+                </template>
+
+                <!-- 业务员本人 / 超管：已就诊（suitable） -->
+                <a-button
+                  v-if="canOperate && record.status === 'suitable'"
+                  type="primary"
+                  block
+                  style="background: #722ed1; border-color: #722ed1"
+                  @click="doVisited"
+                >
+                  <medicine-box-outlined /> 已就诊
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已复诊（pending_follow_up） -->
+                <a-button
+                  v-if="canOperate && record.status === 'pending_follow_up'"
+                  type="primary"
+                  block
+                  @click="openFollowUpModal"
+                >
+                  <calendar-outlined /> 已复诊
+                </a-button>
+
+                <!-- 业务员本人 / 超管：补充资料（incomplete） -->
+                <a-button
+                  v-if="canOperate && record.status === 'incomplete'"
+                  type="primary"
+                  block
+                  style="background: #fa8c16; border-color: #fa8c16"
+                  @click="openSupplementModal"
+                >
+                  <file-add-outlined /> 补充资料
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已完诊 -->
+                <a-button
+                  v-if="canOperate && record.status !== 'completed'"
+                  block
+                  @click="doComplete"
+                >
+                  <check-circle-outlined /> 标记已完诊
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已付费（待付费状态） -->
+                <a-button
+                  v-if="canOperate && record.payment_status === 'pending_payment'"
+                  type="primary"
+                  block
+                  @click="openPayModal"
+                >
+                  <pay-circle-outlined /> 已付费
+                </a-button>
+
+                <!-- 业务员本人 / 超管：已退费（已付费状态） -->
+                <a-button
+                  v-if="canOperate && record.payment_status === 'paid'"
+                  danger
+                  block
+                  @click="openRefundModal"
+                >
+                  <rollback-outlined /> 已退费
+                </a-button>
+
+                <!-- 超管：删除 -->
+                <a-popconfirm
+                  v-if="isSuperAdmin"
+                  title="确定要删除该病例吗？"
+                  @confirm="doDelete"
+                >
+                  <a-button danger block>
+                    <delete-outlined /> 删除病例
+                  </a-button>
+                </a-popconfirm>
+
+                <a-empty v-if="!hasActions && !isSuperAdmin" description="暂无可执行操作" :image-style="{ height: '40px' }" />
+              </a-space>
+            </a-card>
+          </a-col>
+
           <!-- 左侧：基础信息 + 图片 -->
-          <a-col :span="16">
+          <a-col :xs="24" :md="16">
             <!-- 基础信息 -->
             <a-card title="患者基本信息" class="info-card">
               <template #extra>
@@ -19,7 +122,7 @@
                   {{ RECORD_STATUS[record.status]?.label }}
                 </a-tag>
               </template>
-              <a-descriptions :column="2" bordered size="small">
+              <a-descriptions :column="{ xs: 1, sm: 2 }" bordered size="small">
                 <a-descriptions-item label="患者姓名">{{ record.patient_name }}</a-descriptions-item>
                 <a-descriptions-item label="手机号">{{ record.patient_phone }}</a-descriptions-item>
                 <a-descriptions-item label="身份证号" :span="2">{{ record.patient_id_card }}</a-descriptions-item>
@@ -76,15 +179,25 @@
                 :pagination="false"
                 row-key="id"
                 size="small"
+                :scroll="{ x: 'max-content' }"
               />
             </a-card>
           </a-col>
 
-          <!-- 右侧：操作栏 + 操作日志 -->
-          <a-col :span="8">
+          <!-- 右侧：操作栏 + 操作日志（PC端） -->
+          <a-col :xs="0" :md="8">
             <!-- 操作区域 -->
             <a-card title="病例操作" class="info-card">
               <a-space direction="vertical" style="width: 100%" :size="10">
+                <!-- 编辑（业务员本人 / 超管，未完诊） -->
+                <a-button
+                  v-if="canOperate && record.status !== 'completed'"
+                  block
+                  @click="router.push(`/records/${record.id}/edit`)"
+                >
+                  <edit-outlined /> 编辑病例
+                </a-button>
+
                 <!-- 医生判读 -->
                 <template v-if="isDoctor && record.status === 'pending_review'">
                   <a-button type="primary" block style="background: #52c41a; border-color: #52c41a" @click="doReview('review_suitable')">
@@ -127,7 +240,7 @@
                   style="background: #fa8c16; border-color: #fa8c16"
                   @click="openSupplementModal"
                 >
-                  <edit-outlined /> 补充资料
+                  <file-add-outlined /> 补充资料
                 </a-button>
 
                 <!-- 业务员本人 / 超管：已完诊 -->
@@ -159,11 +272,59 @@
                   <rollback-outlined /> 已退费
                 </a-button>
 
-                <a-empty v-if="!hasActions" description="暂无可执行操作" :image-style="{ height: '40px' }" />
+                <!-- 超管：删除 -->
+                <a-popconfirm
+                  v-if="isSuperAdmin"
+                  title="确定要删除该病例吗？"
+                  @confirm="doDelete"
+                >
+                  <a-button danger block>
+                    <delete-outlined /> 删除病例
+                  </a-button>
+                </a-popconfirm>
+
+                <a-empty v-if="!hasActions && !isSuperAdmin" description="暂无可执行操作" :image-style="{ height: '40px' }" />
               </a-space>
             </a-card>
 
             <!-- 操作日志 -->
+            <a-card title="操作日志" class="info-card">
+              <a-timeline>
+                <a-timeline-item
+                  v-for="op in record.operations"
+                  :key="op.id"
+                  :color="getOperationColor(op.operation)"
+                >
+                  <div class="timeline-content">
+                    <div class="op-label">{{ OPERATION_LABELS[op.operation] || op.operation }}</div>
+                    <div class="op-operator">
+                      {{ op.operator_name }}（{{ op.operator_type === 'doctor' ? '医生' : '业务员' }}）
+                    </div>
+                    <div v-if="op.notes" class="op-notes">备注：{{ op.notes }}</div>
+                    <template v-if="op.extra_data && (op.operation === 'pay' || op.operation === 'refund')">
+                      <div v-if="op.extra_data.amount != null" class="op-extra">金额：¥{{ op.extra_data.amount }}</div>
+                      <div v-if="op.extra_data.notes" class="op-extra">说明：{{ op.extra_data.notes }}</div>
+                      <div v-if="op.extra_data.vouchers?.length" class="op-vouchers">
+                        <a-image-preview-group>
+                          <a-image
+                            v-for="(url, idx) in op.extra_data.vouchers"
+                            :key="idx"
+                            :src="url"
+                            :width="48"
+                            :height="48"
+                          />
+                        </a-image-preview-group>
+                      </div>
+                    </template>
+                    <div class="op-time">{{ op.created_at }}</div>
+                  </div>
+                </a-timeline-item>
+              </a-timeline>
+            </a-card>
+          </a-col>
+
+          <!-- 移动端：操作日志放在最后 -->
+          <a-col v-if="isMobile" :xs="24">
             <a-card title="操作日志" class="info-card">
               <a-timeline>
                 <a-timeline-item
@@ -345,7 +506,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
   ArrowLeftOutlined,
@@ -355,14 +516,17 @@ import {
   MedicineBoxOutlined,
   CalendarOutlined,
   EditOutlined,
+  FileAddOutlined,
   CheckCircleOutlined,
   PayCircleOutlined,
-  RollbackOutlined
+  RollbackOutlined,
+  DeleteOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { RECORD_STATUS, PAYMENT_STATUS, OPERATION_LABELS } from '@/utils/constants'
 import {
   getRecordDetail,
+  deleteRecord,
   reviewRecord,
   visitRecord,
   followUpRecord,
@@ -372,9 +536,13 @@ import {
   refundRecord
 } from '@/api/record'
 import ImageUpload from '@/components/ImageUpload.vue'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
+
+const { isMobile } = useIsMobile()
 
 const isSuperAdmin = computed(() => userStore.isSuperAdmin)
 const isDoctor = computed(() => userStore.isDoctor)
@@ -430,6 +598,13 @@ function getOperationColor(operation) {
     refund: 'red'
   }
   return colorMap[operation] || 'blue'
+}
+
+// ===================== 删除病例 =====================
+async function doDelete() {
+  await deleteRecord(record.value.id)
+  message.success('删除成功')
+  router.back()
 }
 
 async function fetchDetail() {
@@ -618,7 +793,9 @@ async function submitRefund() {
   }
 }
 
-onMounted(fetchDetail)
+onMounted(() => {
+  fetchDetail()
+})
 </script>
 
 <style lang="less" scoped>
@@ -634,6 +811,34 @@ onMounted(fetchDetail)
   margin-bottom: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding: 12px;
+  }
+  .back-bar {
+    margin-bottom: 12px;
+  }
+  .info-card {
+    margin-bottom: 12px;
+    border-radius: 6px;
+
+    :deep(.ant-card-head) {
+      min-height: 44px;
+      padding: 0 12px;
+      font-size: 14px;
+    }
+    :deep(.ant-card-body) {
+      padding: 12px;
+    }
+  }
+
+  :deep(.ant-descriptions-item-label),
+  :deep(.ant-descriptions-item-content) {
+    padding: 8px 10px !important;
+    font-size: 13px;
+  }
 }
 .timeline-content {
   .op-label {

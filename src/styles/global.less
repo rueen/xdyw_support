@@ -50,3 +50,42 @@ html, body, #app {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+// ==================== 移动端响应式 ====================
+@media (max-width: 767px) {
+  .page-container {
+    padding: 12px;
+  }
+
+  .search-area {
+    padding: 16px 16px 0;
+    margin-bottom: 12px;
+    border-radius: 6px;
+  }
+
+  .table-area {
+    padding: 12px;
+    border-radius: 6px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+}
+
+// 平板端适配
+@media (max-width: 1023px) and (min-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .search-area {
+    padding: 20px 20px 0;
+  }
+
+  .table-area {
+    padding: 16px;
+  }
+}

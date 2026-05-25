@@ -26,16 +26,46 @@ const routes = [
         meta: { title: '病例管理' }
       },
       {
+        path: 'records/new',
+        name: 'RecordCreate',
+        component: () => import('@/views/record/edit.vue'),
+        meta: { title: '新增病例' }
+      },
+      {
         path: 'records/:id',
         name: 'RecordDetail',
         component: () => import('@/views/record/detail.vue'),
         meta: { title: '病例详情' }
       },
       {
+        path: 'records/:id/edit',
+        name: 'RecordEdit',
+        component: () => import('@/views/record/edit.vue'),
+        meta: { title: '编辑病例' }
+      },
+      {
         path: 'salespersons',
         name: 'Salespersons',
         component: () => import('@/views/salesperson/index.vue'),
         meta: { title: '我的业务员', notDoctor: true }
+      },
+      {
+        path: 'salespersons/new',
+        name: 'SalespersonCreate',
+        component: () => import('@/views/salesperson/edit.vue'),
+        meta: { title: '新增业务员', notDoctor: true }
+      },
+      {
+        path: 'salespersons/:id',
+        name: 'SalespersonDetail',
+        component: () => import('@/views/salesperson/detail.vue'),
+        meta: { title: '业务员详情', notDoctor: true }
+      },
+      {
+        path: 'salespersons/:id/edit',
+        name: 'SalespersonEdit',
+        component: () => import('@/views/salesperson/edit.vue'),
+        meta: { title: '编辑业务员', notDoctor: true }
       },
       {
         path: 'institutions',
